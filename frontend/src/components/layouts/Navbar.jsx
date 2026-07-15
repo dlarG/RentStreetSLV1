@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, X, Menu } from "lucide-react";
+import { X, Menu } from "lucide-react";
 
 function Navbar() {
   const [open, setOpen] = useState(false);
@@ -8,13 +8,11 @@ function Navbar() {
     <header className="sticky top-0 z-50 bg-paper/95 backdrop-blur border-b border-ink/10">
       <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
         <a href="#home" className="flex items-center gap-2">
-          <span className="relative w-8 h-8 flex items-center justify-center bg-bay rounded-full">
-            <MapPin
-              className="w-4.5 h-4.5 text-white"
-              size={18}
-              strokeWidth={2.5}
-            />
-          </span>
+          <img
+            src="asset/logo/5-circled-modified.png"
+            alt="RentStreet Logo"
+            className="h-12 rounded-full"
+          />
           <span className="font-display font-extrabold text-lg tracking-tight">
             RentStreet
           </span>

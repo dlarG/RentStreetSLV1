@@ -79,7 +79,7 @@ function Footer() {
           <span>© 2026 RentStreet. Piloted in Sogod, Southern Leyte.</span>
           <span className="flex items-center gap-1 font-mono">
             <Star size={12} className="text-marigold" fill="#F2A93B" /> Made for
-            SLSU students
+            Students and Tourists
           </span>
         </div>
       </div>
