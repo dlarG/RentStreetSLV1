@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { X, Menu } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const LINKS = [
   { label: "Home", id: "home" },
   { label: "Why Us", id: "why-us" },
   { label: "Pricing", id: "pricing" },
+  { label: "FAQ", id: "faq" },
   { label: "Contact", id: "contact" },
 ];
 
@@ -21,20 +23,37 @@ function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // FIXED: Added a small timeout to let all sibling components render first
   useEffect(() => {
-    const sections = LINKS.map((l) => document.getElementById(l.id)).filter(
-      Boolean
-    );
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setActive(entry.target.id);
-        });
-      },
-      { rootMargin: "-45% 0px -50% 0px" } // triggers when section crosses mid-viewport
-    );
-    sections.forEach((s) => observer.observe(s));
-    return () => observer.disconnect();
+    let observer;
+
+    const setupObserver = () => {
+      const sections = LINKS.map((l) => document.getElementById(l.id)).filter(
+        Boolean
+      );
+
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              setActive(entry.target.id);
+            }
+          });
+        },
+        // Root margin modified slightly to be more responsive to taller sections
+        { rootMargin: "-20% 0px -60% 0px" }
+      );
+
+      sections.forEach((s) => observer.observe(s));
+    };
+
+    // Delay lookup by 100ms so FAQ and Contact IDs actually exist in the DOM
+    const timer = setTimeout(setupObserver, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (observer) observer.disconnect();
+    };
   }, []);
 
   // Lock body scroll while the mobile menu is open
@@ -73,7 +92,7 @@ function Navbar() {
             <img
               src="asset/logo/5-circled-modified.png"
               alt="RentStreet Logo"
-              className="h-10 rounded-full transition-transform duration-200 group-hover:scale-105"
+              className="h-12 rounded-full transition-transform duration-200 group-hover:scale-105"
             />
             <span className="font-display font-extrabold text-xl tracking-tight">
               RentStreet
@@ -106,9 +125,13 @@ function Navbar() {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
-            <a href="#" className="text-sm font-semibold hover:text-bay">
+            <Link
+              to={"/login"}
+              href="#"
+              className="text-sm font-semibold hover:text-bay"
+            >
               Log in
-            </a>
+            </Link>
             <a
               href="#pricing"
               className="btn-primary text-sm px-4 py-2 rounded-full"

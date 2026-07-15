@@ -3,6 +3,7 @@ import Hero from "../layouts/landing/Hero";
 import WhyUs from "../layouts/landing/WhyUs";
 import Pricing from "../layouts/landing/Pricing";
 import ContactUs from "../layouts/landing/ContactUs";
+import FAQ from "../layouts/landing/FAQ";
 import Footer from "../layouts/Footer";
 
 export default function LandingPage() {
@@ -12,6 +13,7 @@ export default function LandingPage() {
       <Hero />
       <WhyUs />
       <Pricing />
+      <FAQ />
       <ContactUs />
       <Footer />
     </div>

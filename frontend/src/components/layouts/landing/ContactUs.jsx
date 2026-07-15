@@ -51,10 +51,10 @@ function ContactUs() {
               </span>
             </div>
 
-            <h2 className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl mb-6 leading-tight">
+            <h2 className="font-display font-extrabold text-3xl sm:text-3xl lg:text-4xl mb-6 leading-tight">
               Let's find your{" "}
               <span className="relative inline-block">
-                <span className="relative z-10 bg-gradient-to-r from-bay to-marigold bg-clip-text text-transparent">
+                <span className="relative z-10 bg-gradient-to-r from-[#0e5c56] to-[#f2a93b] bg-clip-text text-transparent">
                   perfect room
                 </span>
                 <svg
@@ -73,7 +73,7 @@ function ContactUs() {
               </span>
             </h2>
 
-            <p className="text-lg text-ink/60 leading-relaxed mb-10 max-w-md">
+            <p className="text-base text-ink/60 leading-relaxed mb-10 max-w-md">
               We're a small team based right in Sogod. Message us and a real
               person will get back to you —{" "}
               <span className="font-semibold text-ink">
@@ -160,9 +160,6 @@ function ContactUs() {
                   <h3 className="font-display font-bold text-2xl mb-2">
                     Send us a message
                   </h3>
-                  <p className="text-sm text-ink/50">
-                    Fill out the form and we'll get back to you within the day.
-                  </p>
                 </div>
 
                 <form
@@ -177,7 +174,7 @@ function ContactUs() {
                       <input
                         type="text"
                         placeholder="Juan Dela Cruz"
-                        className="w-full rounded-2xl border-2 border-ink/10 px-5 py-3.5 bg-mist/50 focus:bg-white focus:outline-none focus:border-bay focus:ring-4 focus:ring-bay/10 transition-all duration-300 placeholder:text-ink/30"
+                        className="w-full rounded-2xl border-2 border-ink/10 px-5 py-3.5 bg-mist/50 focus:bg-white  transition-all duration-300 placeholder:text-ink/30"
                       />
                     </div>
 
@@ -188,7 +185,7 @@ function ContactUs() {
                       <input
                         type="email"
                         placeholder="you@email.com"
-                        className="w-full rounded-2xl border-2 border-ink/10 px-5 py-3.5 bg-mist/50 focus:bg-white focus:outline-none focus:border-bay focus:ring-4 focus:ring-bay/10 transition-all duration-300 placeholder:text-ink/30"
+                        className="w-full rounded-2xl border-2 border-ink/10 px-5 py-3.5 bg-mist/50 focus:bg-white  transition-all duration-300 placeholder:text-ink/30"
                       />
                     </div>
 
@@ -196,7 +193,7 @@ function ContactUs() {
                       <label className="text-sm font-semibold text-ink/70 block mb-2">
                         I'm looking for...
                       </label>
-                      <select className="w-full rounded-2xl border-2 border-ink/10 px-5 py-3.5 bg-mist/50 focus:bg-white focus:outline-none focus:border-bay focus:ring-4 focus:ring-bay/10 transition-all duration-300 text-ink/60">
+                      <select className="w-full rounded-2xl border-2 border-ink/10 px-5 py-3.5 bg-mist/50 focus:bg-white  transition-all duration-300 text-ink/60">
                         <option value="" disabled selected>
                           A room to rent
                         </option>
@@ -215,14 +212,14 @@ function ContactUs() {
                       <textarea
                         rows={4}
                         placeholder="I'm looking for a room near SLSU main campus with WiFi and..."
-                        className="w-full rounded-2xl border-2 border-ink/10 px-5 py-3.5 bg-mist/50 focus:bg-white focus:outline-none focus:border-bay focus:ring-4 focus:ring-bay/10 transition-all duration-300 resize-none placeholder:text-ink/30"
+                        className="w-full rounded-2xl border-2 border-ink/10 px-5 py-3.5 bg-mist/50 focus:bg-white  transition-all duration-300 resize-none placeholder:text-ink/30"
                       />
                     </div>
                   </div>
 
                   <button
                     type="submit"
-                    className="group relative w-full bg-bay hover:bg-bay-deep text-white font-semibold rounded-2xl py-4 transition-all duration-300 hover:shadow-xl hover:shadow-bay/20 hover:-translate-y-0.5 overflow-hidden"
+                    className="cursor-pointer group relative w-full bg-papaya hover:bg-papaya-deep text-white font-semibold rounded-2xl py-4 transition-all duration-300 hover:shadow-xl hover:shadow-papaya/20 hover:-translate-y-0.5 overflow-hidden"
                   >
                     <span className="relative z-10 flex items-center justify-center gap-2">
                       Send message
@@ -246,7 +243,7 @@ function ContactUs() {
                 </form>
 
                 {/* Decorative corner gradient */}
-                <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-bay to-marigold rounded-full opacity-10 blur-xl" />
+                <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-papaya to-marigold rounded-full opacity-10 blur-xl" />
                 <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-gradient-to-br from-marigold to-bay rounded-full opacity-10 blur-xl" />
               </div>
             </div>
