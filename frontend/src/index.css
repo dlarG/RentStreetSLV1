@@ -1,1 +1,92 @@
 @import "tailwindcss";
+
+:root {
+  --ink: #14231f;
+  --bay: #0e5c56;
+  --bay-deep: #0a3b37;
+  --marigold: #f2a93b;
+  --papaya: #ef5b3b;
+  --paper: #faf8f2;
+  --mist: #eff5f1;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+.font-display {
+  font-family: "Bricolage Grotesque", sans-serif;
+}
+.font-mono {
+  font-family: "Space Mono", monospace;
+}
+
+.bg-bay {
+  background-color: var(--bay);
+}
+.bg-bay-deep {
+  background-color: var(--bay-deep);
+}
+.bg-marigold {
+  background-color: var(--marigold);
+}
+.bg-papaya {
+  background-color: var(--papaya);
+}
+.bg-paper {
+  background-color: var(--paper);
+}
+.bg-mist {
+  background-color: var(--mist);
+}
+.text-bay {
+  color: var(--bay);
+}
+.text-marigold {
+  color: var(--marigold);
+}
+.text-papaya {
+  color: var(--papaya);
+}
+.border-ink {
+  border-color: var(--ink);
+}
+
+.btn-primary {
+  background: var(--papaya);
+  color: white;
+  font-weight: 600;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(239, 91, 59, 0.35);
+}
+.btn-outline {
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.btn-outline:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.card-tilt-1 {
+  transform: rotate(-4deg);
+}
+.card-tilt-2 {
+  transform: rotate(3deg);
+}
+.card-tilt-3 {
+  transform: rotate(-1.5deg);
+}
+.listing-card {
+  transition: transform 0.3s ease;
+}
+.listing-card:hover {
+  transform: rotate(0deg) scale(1.04);
+  z-index: 10;
+}
