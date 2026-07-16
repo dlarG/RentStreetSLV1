@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -15,6 +15,7 @@ import {
   LogOut,
   MapPin,
 } from "lucide-react";
+import api from "../../../lib/api";
 
 const sidebarLinks = [
   {
@@ -97,6 +98,66 @@ const sidebarLinks = [
 
 function AdminSidebar({ collapsed, onToggle }) {
   const location = useLocation();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  const sidebarLinks = [
+    {
+      section: "Overview",
+      items: [
+        { label: "Dashboard", icon: LayoutDashboard, path: "/admin" },
+        { label: "Analytics", icon: BarChart3, path: "/admin/analytics" },
+      ],
+    },
+    {
+      section: "Management",
+      items: [
+        {
+          label: "Landlords",
+          icon: Building2,
+          path: "/admin/landlords",
+          badge: pendingCount > 0 ? pendingCount : null,
+          badgeColor: "bg-marigold text-ink",
+        },
+        { label: "Tenants", icon: Users, path: "/admin/tenants" },
+        { label: "Properties", icon: Building2, path: "/admin/properties" },
+        {
+          label: "Subscriptions",
+          icon: CreditCard,
+          path: "/admin/subscriptions",
+        },
+      ],
+    },
+    {
+      section: "Review & Trust",
+      items: [
+        { label: "Disputes", icon: ShieldCheck, path: "/admin/disputes" },
+        { label: "Reports", icon: Flag, path: "/admin/reports" },
+      ],
+    },
+    {
+      section: "System",
+      items: [{ label: "Settings", icon: Settings, path: "/admin/settings" }],
+    },
+  ];
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchCount = () => {
+      api
+        .get("/admin/landlords/pending-count")
+        .then((res) => {
+          if (!cancelled) setPendingCount(res.data.count);
+        })
+        .catch(() => {}); // silent — a stale/missing badge isn't worth surfacing an error for
+    };
+
+    fetchCount();
+    const interval = setInterval(fetchCount, 30000); // refresh every 30s so it doesn't go stale mid-session
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <aside
