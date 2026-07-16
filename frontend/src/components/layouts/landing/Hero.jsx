@@ -48,17 +48,17 @@ function Hero() {
 
       <div className="relative h-[420px] hidden sm:block">
         <img
-          src="https://picsum.photos/id/1031/500/650"
+          src="/asset/hero/1.jpg"
           alt="Boarding house room listing"
           className="listing-card card-tilt-1 absolute top-6 left-4 w-56 h-72 object-cover rounded-2xl shadow-xl border-4 border-white"
         />
         <img
-          src="https://picsum.photos/id/106/500/650"
+          src="/asset/hero/4.jpg"
           alt="Boarding house room listing"
           className="listing-card card-tilt-2 absolute top-0 right-2 w-52 h-64 object-cover rounded-2xl shadow-xl border-4 border-white"
         />
         <img
-          src="https://picsum.photos/id/164/500/650"
+          src="/asset/hero/3.jpg"
           alt="Boarding house room listing"
           className="listing-card card-tilt-3 absolute bottom-0 left-16 w-48 h-60 object-cover rounded-2xl shadow-xl border-4 border-white"
         />

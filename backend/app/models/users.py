@@ -21,6 +21,9 @@ class User(Base):
     is_active = Column(Boolean, nullable=False, server_default=text("true"))
     created_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"))
     updated_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"))
+    failed_login_attempts = Column(SmallInteger, nullable=False, server_default="0")
+    locked_until = Column(TIMESTAMP(timezone=True), nullable=True)
+    last_login_at = Column(TIMESTAMP(timezone=True), nullable=True)
 
     renter_profile = relationship("RenterProfile", back_populates="user", uselist=False)
     landlord_profile = relationship("LandlordProfile", back_populates="user", uselist=False)
