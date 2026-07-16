@@ -5,9 +5,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.core.database import get_db
-from app.core.security import verify_password, create_access_token
-from app.models.users import User
-from app.schemas.auth import LoginRequest, TokenResponse, UserPublic
+from app.core.security import hash_password, verify_password, create_access_token
+from app.models.users import User, RenterProfile, LandlordProfile
+from app.schemas.auth import LoginRequest, TokenResponse, UserPublic, RegisterRequest, RegisterResponse
 from app.api.deps import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -72,7 +72,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     token = create_access_token(user_id=str(user.id), role=user.role)
     return TokenResponse(access_token=token, user=UserPublic.model_validate(user, from_attributes=True) if False else UserPublic(
         id=str(user.id), email=user.email, phone_number=user.phone_number,
-        full_name=user.full_name, role=user.role,
+        full_name=user.full_name, role=user.role, approval_status=user.approval_status,
     ))
 
 
@@ -80,5 +80,56 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 def get_me(current_user: User = Depends(get_current_user)):
     return UserPublic(
         id=str(current_user.id), email=current_user.email, phone_number=current_user.phone_number,
-        full_name=current_user.full_name, role=current_user.role,
+        full_name=current_user.full_name, role=current_user.role, approval_status=current_user.approval_status,
+    )
+
+@router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
+def register(payload: RegisterRequest, db: Session = Depends(get_db)):
+    email = payload.email.lower()
+
+    existing = db.query(User).filter(
+        or_(User.email == email, User.phone_number == payload.phone_number)
+    ).first()
+    if existing:
+        field = "email" if existing.email == email else "phone number"
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"An account with this {field} already exists.",
+        )
+
+    now = datetime.now(timezone.utc)
+    is_renter = payload.role == "renter"
+
+    user = User(
+        email=email,
+        phone_number=payload.phone_number,
+        password_hash=hash_password(payload.password),
+        role=payload.role,
+        full_name=payload.full_name,
+        is_active=True,
+        approval_status="accepted" if is_renter else "pending",
+        accepted_at=now if is_renter else None,
+    )
+    db.add(user)
+    db.flush()  # populate user.id before creating the linked profile row
+
+    if is_renter:
+        db.add(RenterProfile(user_id=user.id))
+    else:
+        db.add(LandlordProfile(user_id=user.id))
+
+    db.commit()
+    db.refresh(user)
+
+    message = (
+        "Account created."
+        if is_renter
+        else "Account created. Our team will review your landlord application shortly."
+    )
+    return RegisterResponse(
+        message=message,
+        user=UserPublic(
+            id=str(user.id), email=user.email, phone_number=user.phone_number,
+            full_name=user.full_name, role=user.role, approval_status=user.approval_status,
+        ),
     )

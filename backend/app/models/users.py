@@ -4,7 +4,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from geoalchemy2 import Geography
 from app.core.database import Base
-from app.core.enums import user_role_enum
+from app.core.enums import user_role_enum, approval_status_enum
 
 
 class User(Base):
@@ -28,6 +28,10 @@ class User(Base):
     renter_profile = relationship("RenterProfile", back_populates="user", uselist=False)
     landlord_profile = relationship("LandlordProfile", back_populates="user", uselist=False)
 
+    approval_status = Column(approval_status_enum, nullable=False, server_default="pending")
+    accepted_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    rejected_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    validated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
 class Campus(Base):
     __tablename__ = "campuses"

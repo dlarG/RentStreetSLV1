@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import LandingPage from "./components/pages/LandingPage";
 import LoginPage from "./components/layouts/auth/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RegisterPage from "./components/layouts/auth/RegisterPage";
 
 // Placeholder dashboards — replace with real ones as you build them
 const AdminDashboard = () => <div className="p-10">Admin Dashboard</div>;
@@ -13,6 +14,7 @@ function App() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
       <Route
         path="/admin"
@@ -25,7 +27,7 @@ function App() {
       <Route
         path="/landlord"
         element={
-          <ProtectedRoute allowedRoles={["landlord"]}>
+          <ProtectedRoute allowedRoles={["landlord"]} requireApproved>
             <LandlordDashboard />
           </ProtectedRoute>
         }
