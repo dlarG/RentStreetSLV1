@@ -41,9 +41,13 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("rentstreet_token");
     setUser(null);
   };
+  const register = async (formData) => {
+    const res = await api.post("/auth/register", formData);
+    return res.data; // { message, user } — no token; we route to login, not auto-login
+  };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );
