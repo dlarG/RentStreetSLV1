@@ -105,7 +105,7 @@ export default function LoginPage() {
           {/* Email/Phone Field */}
           <div>
             <label className="text-sm font-semibold text-ink/70 block mb-2">
-              Email address
+              Email or Phone
             </label>
             <div className="relative">
               <Mail
