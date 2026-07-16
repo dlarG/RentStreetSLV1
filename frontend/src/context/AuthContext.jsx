@@ -42,10 +42,11 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
   const register = async (formData) => {
-    const res = await api.post("/auth/register", formData);
-    return res.data; // { message, user } — no token; we route to login, not auto-login
+    const res = await api.post("/auth/register", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
   };
-
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, register }}>
       {children}

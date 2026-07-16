@@ -23,7 +23,7 @@ class UserPublic(BaseModel):
     phone_number: str | None
     full_name: str
     role: str
-    approval_status: str
+    approval_status: str | None = None   
 
     model_config = {"from_attributes": True}
 

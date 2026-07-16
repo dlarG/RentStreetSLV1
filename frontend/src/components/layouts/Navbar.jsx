@@ -132,12 +132,13 @@ function Navbar() {
             >
               Log in
             </Link>
-            <a
+            <Link
+              to={"/register"}
               href="#pricing"
               className="btn-primary text-sm px-4 py-2 rounded-full"
             >
               List your room
-            </a>
+            </Link>
           </div>
 
           <button
@@ -191,13 +192,20 @@ function Navbar() {
               </span>
             </button>
           ))}
-          <a
-            href="#pricing"
-            className="btn-primary text-sm px-4 py-2.5 rounded-full text-center mt-2"
+          <Link
+            to={"/login"}
+            href="#"
+            className="bg-[#14231f] text-sm text-white relative text-center px-4 py-2.5 rounded-xl transition-colors"
+          >
+            Log in
+          </Link>
+          <Link
+            to={"/register"}
+            className="btn-primary text-sm px-4 py-2.5 rounded-xl text-center mt-1"
             onClick={() => setOpen(false)}
           >
             List your room
-          </a>
+          </Link>
         </div>
       </div>
     </>
