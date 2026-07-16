@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
   Building2,
-  ClipboardCheck,
   CreditCard,
   ShieldCheck,
   Flag,
@@ -13,92 +11,37 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  MapPin,
+  X,
 } from "lucide-react";
+import { useState, useEffect } from "react";
 import api from "../../../lib/api";
 
-const sidebarLinks = [
-  {
-    section: "Overview",
-    items: [
-      {
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        path: "/admin",
-      },
-      {
-        label: "Analytics",
-        icon: BarChart3,
-        path: "/admin/analytics",
-      },
-    ],
-  },
-  {
-    section: "Management",
-    items: [
-      {
-        label: "Landlords",
-        icon: Building2,
-        path: "/admin/landlords",
-        badge: 3,
-        badgeColor: "bg-marigold text-ink",
-      },
-      {
-        label: "Tenants",
-        icon: Users,
-        path: "/admin/tenants",
-      },
-      {
-        label: "Properties",
-        icon: Building2,
-        path: "/admin/properties",
-      },
-      {
-        label: "Subscriptions",
-        icon: CreditCard,
-        path: "/admin/subscriptions",
-      },
-    ],
-  },
-  {
-    section: "Review & Trust",
-    items: [
-      {
-        label: "Approvals",
-        icon: ClipboardCheck,
-        path: "/admin/approvals",
-        badge: 5,
-        badgeColor: "bg-red-500 text-white",
-      },
-      {
-        label: "Disputes",
-        icon: ShieldCheck,
-        path: "/admin/disputes",
-        badge: 2,
-        badgeColor: "bg-orange-500 text-white",
-      },
-      {
-        label: "Reports",
-        icon: Flag,
-        path: "/admin/reports",
-      },
-    ],
-  },
-  {
-    section: "System",
-    items: [
-      {
-        label: "Settings",
-        icon: Settings,
-        path: "/admin/settings",
-      },
-    ],
-  },
-];
-
-function AdminSidebar({ collapsed, onToggle }) {
+function AdminSidebar({
+  collapsed,
+  onToggleCollapse,
+  mobileOpen,
+  onCloseMobile,
+}) {
   const location = useLocation();
   const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchCount = () => {
+      api
+        .get("/admin/landlords/pending-count")
+        .then((res) => {
+          if (!cancelled) setPendingCount(res.data.count);
+        })
+        .catch(() => {});
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   const sidebarLinks = [
     {
@@ -114,7 +57,7 @@ function AdminSidebar({ collapsed, onToggle }) {
         {
           label: "Landlords",
           icon: Building2,
-          path: "/admin/landlords",
+          path: "/admin/landlords-management",
           badge: pendingCount > 0 ? pendingCount : null,
           badgeColor: "bg-marigold text-ink",
         },
@@ -139,134 +82,148 @@ function AdminSidebar({ collapsed, onToggle }) {
       items: [{ label: "Settings", icon: Settings, path: "/admin/settings" }],
     },
   ];
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchCount = () => {
-      api
-        .get("/admin/landlords/pending-count")
-        .then((res) => {
-          if (!cancelled) setPendingCount(res.data.count);
-        })
-        .catch(() => {}); // silent — a stale/missing badge isn't worth surfacing an error for
-    };
-
-    fetchCount();
-    const interval = setInterval(fetchCount, 30000); // refresh every 30s so it doesn't go stale mid-session
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, []);
 
   return (
-    <aside
-      className={`fixed top-0 left-0 z-30 h-screen bg-white border-r border-ink/5 transition-all duration-300 flex flex-col ${
-        collapsed ? "w-20" : "w-64"
-      }`}
-    >
-      {/* Logo */}
-      <div className="h-16 flex items-center gap-3 px-4 border-b border-ink/5 flex-shrink-0">
-        <button
-          onClick={onToggle}
-          className="w-8 h-8 rounded-lg bg-mist flex items-center justify-center hover:bg-bay/10 transition-colors flex-shrink-0"
-        >
-          {collapsed ? (
-            <ChevronRight size={16} className="text-ink/60" />
-          ) : (
-            <ChevronLeft size={16} className="text-ink/60" />
-          )}
-        </button>
-        {!collapsed && (
-          <Link to="/admin" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-bay flex items-center justify-center">
-              <MapPin size={16} className="text-white" />
-            </div>
-            <span className="font-display font-extrabold text-sm">
-              <span className="text-bay">Rent</span>Street
-            </span>
-          </Link>
-        )}
-      </div>
+    <>
+      {/* Mobile backdrop — click to close, only rendered below lg */}
+      <div
+        className={`fixed inset-0 z-40 bg-ink/40 backdrop-blur-sm lg:hidden transition-opacity duration-300 ${
+          mobileOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
+        onClick={onCloseMobile}
+      />
 
-      {/* Navigation Links */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
-        {sidebarLinks.map((section) => (
-          <div key={section.section}>
-            {!collapsed && (
-              <p className="text-xs font-semibold text-ink/30 uppercase tracking-wider mb-2 px-3">
-                {section.section}
-              </p>
+      <aside
+        className={`fixed top-0 left-0 z-50 h-screen bg-white border-r border-ink/5 flex flex-col
+          transition-transform duration-300 lg:transition-[width] lg:duration-300 lg:translate-x-0
+          w-64 ${collapsed ? "lg:w-20" : "lg:w-64"}
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
+        {/* Logo / header */}
+        <div className="h-16 flex items-center gap-3 px-4 border-b border-ink/5 flex-shrink-0">
+          {/* Desktop collapse toggle — hidden on mobile, replaced by the X below */}
+          <button
+            onClick={onToggleCollapse}
+            className="hidden lg:flex w-8 h-8 rounded-lg bg-mist items-center justify-center hover:bg-bay/10 transition-colors flex-shrink-0"
+          >
+            {collapsed ? (
+              <ChevronRight size={16} className="text-ink/60" />
+            ) : (
+              <ChevronLeft size={16} className="text-ink/60" />
             )}
-            <div className="space-y-1">
-              {section.items.map((item) => {
-                const isActive = location.pathname === item.path;
-                const Icon = item.icon;
+          </button>
 
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${
-                      isActive
-                        ? "bg-bay text-white shadow-lg shadow-bay/20"
-                        : "text-ink/60 hover:bg-mist hover:text-ink"
-                    }`}
-                    title={collapsed ? item.label : undefined}
-                  >
-                    <Icon
-                      size={20}
-                      className={`flex-shrink-0 ${
+          {(!collapsed || mobileOpen) && (
+            <Link
+              to="/admin"
+              className="flex items-center gap-2 flex-1 min-w-0"
+            >
+              <div className="w-8 h-8 rounded-full bg-bay flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <img
+                  src="/asset/logo/5-circled-modified.png"
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="font-display font-extrabold text-sm truncate">
+                <span className="text-papaya">Rent</span>Street
+              </span>
+            </Link>
+          )}
+
+          {/* Mobile close button */}
+          <button
+            onClick={onCloseMobile}
+            className="lg:hidden w-8 h-8 rounded-lg bg-mist flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0 ml-auto"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Navigation Links */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+          {sidebarLinks.map((section) => (
+            <div key={section.section}>
+              {(!collapsed || mobileOpen) && (
+                <p className="text-xs font-semibold text-ink/30 uppercase tracking-wider mb-2 px-3">
+                  {section.section}
+                </p>
+              )}
+              <div className="space-y-1">
+                {section.items.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  const Icon = item.icon;
+                  const showLabel = !collapsed || mobileOpen;
+
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${
                         isActive
-                          ? "text-white"
-                          : "text-ink/40 group-hover:text-ink"
+                          ? "bg-bay text-white shadow-lg shadow-bay/20"
+                          : "text-ink/60 hover:bg-mist hover:text-ink"
                       }`}
-                    />
-                    {!collapsed && (
-                      <>
-                        <span className="text-sm font-medium flex-1">
-                          {item.label}
-                        </span>
-                        {item.badge && (
-                          <span
-                            className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.badgeColor}`}
-                          >
-                            {item.badge}
+                      title={!showLabel ? item.label : undefined}
+                    >
+                      <Icon
+                        size={20}
+                        className={`flex-shrink-0 ${
+                          isActive
+                            ? "text-white"
+                            : "text-ink/40 group-hover:text-ink"
+                        }`}
+                      />
+                      {showLabel && (
+                        <>
+                          <span className="text-sm font-medium flex-1 truncate">
+                            {item.label}
                           </span>
-                        )}
-                      </>
-                    )}
-                    {collapsed && item.badge && (
-                      <span
-                        className={`absolute -top-1 -right-1 w-4 h-4 text-[10px] font-bold flex items-center justify-center rounded-full ${item.badgeColor}`}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                    {isActive && !collapsed && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white" />
-                    )}
-                  </Link>
-                );
-              })}
+                          {item.badge && (
+                            <span
+                              className={`text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${item.badgeColor}`}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                        </>
+                      )}
+                      {!showLabel && item.badge && (
+                        <span
+                          className={`absolute -top-1 -right-1 w-4 h-4 text-[10px] font-bold flex items-center justify-center rounded-full ${item.badgeColor}`}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
-      </nav>
+          ))}
+        </nav>
 
-      {/* Footer */}
-      <div className="border-t border-ink/5 p-3 flex-shrink-0">
-        <button
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-ink/60 hover:bg-red-50 hover:text-red-600 transition-colors w-full ${
-            collapsed ? "justify-center" : ""
-          }`}
-          title={collapsed ? "Logout" : undefined}
+        {/* Footer */}
+        <div
+          className="border-t border-ink/5 p-3 flex-shrink-0"
+          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
         >
-          <LogOut size={20} />
-          {!collapsed && <span className="text-sm font-medium">Logout</span>}
-        </button>
-      </div>
-    </aside>
+          <button
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-ink/60 hover:bg-red-50 hover:text-red-600 transition-colors w-full ${
+              collapsed && !mobileOpen ? "lg:justify-center" : ""
+            }`}
+          >
+            <LogOut size={20} className="flex-shrink-0" />
+            {(!collapsed || mobileOpen) && (
+              <span className="text-sm font-medium">Logout</span>
+            )}
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
 

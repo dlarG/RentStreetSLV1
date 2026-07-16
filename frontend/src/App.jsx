@@ -8,7 +8,7 @@ import LandLordDashboard from "./components/pages/users/LandLordDashboard";
 import TenantDashboard from "./components/pages/users/TenantDashboard";
 import AdminOverview from "./components/pages/admin/AdminOverview";
 import LandLordManagement from "./components/pages/admin/LandLordManagement";
-// Placeholder dashboards — replace with real ones as you build them
+import NotFound from "./components/pages/NotFound";
 
 function App() {
   return (
@@ -26,7 +26,7 @@ function App() {
         }
       >
         <Route index element={<AdminOverview />} />
-        <Route path="landlords" element={<LandLordManagement />} />
+        <Route path="landlords-management" element={<LandLordManagement />} />
       </Route>
       <Route
         path="/landlord"
@@ -44,6 +44,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
