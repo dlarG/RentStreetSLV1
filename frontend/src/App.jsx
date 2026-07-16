@@ -3,11 +3,12 @@ import LandingPage from "./components/pages/LandingPage";
 import LoginPage from "./components/layouts/auth/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RegisterPage from "./components/layouts/auth/RegisterPage";
-
+import AdminDashboard from "./components/pages/admin/AdminDashboard";
+import LandLordDashboard from "./components/pages/users/LandLordDashboard";
+import TenantDashboard from "./components/pages/users/TenantDashboard";
+import AdminOverview from "./components/pages/admin/AdminOverview";
+import LandLordManagement from "./components/pages/admin/LandLordManagement";
 // Placeholder dashboards — replace with real ones as you build them
-const AdminDashboard = () => <div className="p-10">Admin Dashboard</div>;
-const LandlordDashboard = () => <div className="p-10">Landlord Dashboard</div>;
-const StudentDashboard = () => <div className="p-10">Student Dashboard</div>;
 
 function App() {
   return (
@@ -23,12 +24,15 @@ function App() {
             <AdminDashboard />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<AdminOverview />} />
+        <Route path="landlords" element={<LandLordManagement />} />
+      </Route>
       <Route
         path="/landlord"
         element={
           <ProtectedRoute allowedRoles={["landlord"]} requireApproved>
-            <LandlordDashboard />
+            <LandLordDashboard />
           </ProtectedRoute>
         }
       />
@@ -36,7 +40,7 @@ function App() {
         path="/renter"
         element={
           <ProtectedRoute allowedRoles={["renter"]}>
-            <StudentDashboard />
+            <TenantDashboard />
           </ProtectedRoute>
         }
       />

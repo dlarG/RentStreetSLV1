@@ -6,8 +6,11 @@ from app.core.database import get_db, engine
 from app.core.config import settings
 from app.api.v1.auth import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title=settings.PROJECT_NAME)
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,

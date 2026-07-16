@@ -26,12 +26,13 @@ class User(Base):
     last_login_at = Column(TIMESTAMP(timezone=True), nullable=True)
 
     renter_profile = relationship("RenterProfile", back_populates="user", uselist=False)
-    landlord_profile = relationship("LandlordProfile", back_populates="user", uselist=False)
+    landlord_profile = relationship(
+        "LandlordProfile",
+        back_populates="user",
+        uselist=False,
+        foreign_keys="LandlordProfile.user_id",
+    )
 
-    approval_status = Column(approval_status_enum, nullable=False, server_default="pending")
-    accepted_at = Column(TIMESTAMP(timezone=True), nullable=True)
-    rejected_at = Column(TIMESTAMP(timezone=True), nullable=True)
-    validated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
 class Campus(Base):
     __tablename__ = "campuses"
@@ -70,7 +71,13 @@ class LandlordProfile(Base):
     gcash_number = Column(String(20))
     maya_number = Column(String(20))
     valid_id_url = Column(String)
-    is_verified_landlord = Column(Boolean, nullable=False, server_default=text("false"))
-    verified_at = Column(TIMESTAMP(timezone=True))
+    business_permit_url = Column(String)
 
-    user = relationship("User", back_populates="landlord_profile")
+    approval_status = Column(approval_status_enum, nullable=False, server_default="pending")
+    accepted_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    rejected_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    rejection_reason = Column(String, nullable=True)
+    validated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    user = relationship("User", back_populates="landlord_profile", foreign_keys=[user_id])
+    validator = relationship("User", foreign_keys=[validated_by])

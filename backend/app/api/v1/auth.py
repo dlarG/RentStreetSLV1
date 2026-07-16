@@ -1,6 +1,6 @@
 # backend/app/api/v1/auth.py
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import Form, File, UploadFile, APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
@@ -9,6 +9,7 @@ from app.core.security import hash_password, verify_password, create_access_toke
 from app.models.users import User, RenterProfile, LandlordProfile
 from app.schemas.auth import LoginRequest, TokenResponse, UserPublic, RegisterRequest, RegisterResponse
 from app.api.deps import get_current_user
+from app.core.files import save_upload, ALLOWED_DOCUMENT_TYPES, ALLOWED_IMAGE_TYPES
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -22,7 +23,6 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         or_(User.email == payload.identifier, User.phone_number == payload.identifier)
     ).first()
 
-    # Generic error for "not found" — never reveal whether the identifier exists
     invalid_credentials = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid email/phone number or password.",
@@ -33,7 +33,6 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
     now = datetime.now(timezone.utc)
 
-    # Locked account check
     if user.locked_until and user.locked_until > now:
         remaining = int((user.locked_until - now).total_seconds() / 60) + 1
         raise HTTPException(
@@ -62,7 +61,6 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         db.commit()
         raise invalid_credentials
 
-    # Success — reset lockout state, record login
     user.failed_login_attempts = 0
     user.locked_until = None
     user.last_login_at = now
@@ -70,53 +68,81 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     db.refresh(user)
 
     token = create_access_token(user_id=str(user.id), role=user.role)
-    return TokenResponse(access_token=token, user=UserPublic.model_validate(user, from_attributes=True) if False else UserPublic(
-        id=str(user.id), email=user.email, phone_number=user.phone_number,
-        full_name=user.full_name, role=user.role, approval_status=user.approval_status,
-    ))
+    return TokenResponse(access_token=token, user=UserPublic(**_to_public(user, db)))
 
 
 @router.get("/me", response_model=UserPublic)
-def get_me(current_user: User = Depends(get_current_user)):
-    return UserPublic(
-        id=str(current_user.id), email=current_user.email, phone_number=current_user.phone_number,
-        full_name=current_user.full_name, role=current_user.role, approval_status=current_user.approval_status,
-    )
+def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return UserPublic(**_to_public(current_user, db))
 
-@router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
-def register(payload: RegisterRequest, db: Session = Depends(get_db)):
-    email = payload.email.lower()
-
-    existing = db.query(User).filter(
-        or_(User.email == email, User.phone_number == payload.phone_number)
-    ).first()
-    if existing:
-        field = "email" if existing.email == email else "phone number"
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"An account with this {field} already exists.",
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+async def register(
+    full_name: str = Form(...),
+    email: str = Form(...),
+    phone_number: str = Form(...),
+    password: str = Form(...),
+    confirm_password: str = Form(...),
+    role: str = Form(...),
+    business_name: str | None = Form(None),
+    profile_photo: UploadFile = File(...),
+    valid_id: UploadFile | None = File(None),
+    business_permit: UploadFile | None = File(None),
+    db: Session = Depends(get_db),
+):
+    # Reuse the same Pydantic validation rules as before
+    try:
+        payload = RegisterRequest(
+            full_name=full_name, email=email, phone_number=phone_number,
+            password=password, confirm_password=confirm_password, role=role,
         )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
 
-    now = datetime.now(timezone.utc)
+    email_lower = payload.email.lower()
     is_renter = payload.role == "renter"
 
+    if not is_renter:
+        if not business_name or not business_name.strip():
+            raise HTTPException(status_code=422, detail="Business name is required for landlord accounts.")
+        if not valid_id:
+            raise HTTPException(status_code=422, detail="A valid government ID is required for landlord accounts.")
+        if not business_permit:
+            raise HTTPException(status_code=422, detail="A business permit or boarding house registration certificate is required.")
+
+    existing = db.query(User).filter(
+        or_(User.email == email_lower, User.phone_number == payload.phone_number)
+    ).first()
+    if existing:
+        field = "email" if existing.email == email_lower else "phone number"
+        raise HTTPException(status_code=409, detail=f"An account with this {field} already exists.")
+
+    profile_photo_url = await save_upload(profile_photo, "profile_photos", ALLOWED_IMAGE_TYPES)
+
+    now = datetime.now(timezone.utc)
     user = User(
-        email=email,
+        email=email_lower,
         phone_number=payload.phone_number,
         password_hash=hash_password(payload.password),
         role=payload.role,
         full_name=payload.full_name,
+        profile_photo_url=profile_photo_url,
         is_active=True,
-        approval_status="accepted" if is_renter else "pending",
-        accepted_at=now if is_renter else None,
     )
     db.add(user)
-    db.flush()  # populate user.id before creating the linked profile row
+    db.flush()
 
     if is_renter:
         db.add(RenterProfile(user_id=user.id))
     else:
-        db.add(LandlordProfile(user_id=user.id))
+        valid_id_url = await save_upload(valid_id, "valid_ids", ALLOWED_DOCUMENT_TYPES)
+        business_permit_url = await save_upload(business_permit, "business_permits", ALLOWED_DOCUMENT_TYPES)
+        db.add(LandlordProfile(
+            user_id=user.id,
+            business_name=business_name.strip(),
+            valid_id_url=valid_id_url,
+            business_permit_url=business_permit_url,
+            approval_status="pending",
+        ))
 
     db.commit()
     db.refresh(user)
@@ -124,12 +150,16 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     message = (
         "Account created."
         if is_renter
-        else "Account created. Our team will review your landlord application shortly."
+        else "Application submitted. Our team will review your documents and notify you of the result."
     )
-    return RegisterResponse(
-        message=message,
-        user=UserPublic(
-            id=str(user.id), email=user.email, phone_number=user.phone_number,
-            full_name=user.full_name, role=user.role, approval_status=user.approval_status,
-        ),
-    )
+    return {"message": message, "user": _to_public(user, db)}
+
+def _to_public(user: User, db: Session) -> dict:
+    approval_status = None
+    if user.role == "landlord":
+        profile = db.query(LandlordProfile).filter(LandlordProfile.user_id == user.id).first()
+        approval_status = profile.approval_status if profile else None
+    return {
+        "id": str(user.id), "email": user.email, "phone_number": user.phone_number,
+        "full_name": user.full_name, "role": user.role, "approval_status": approval_status,
+    }
