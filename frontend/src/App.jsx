@@ -1,17 +1,43 @@
 import { Routes, Route } from "react-router-dom";
 import LandingPage from "./components/pages/LandingPage";
-import Login from "./components/layouts/auth/Login";
-import Register from "./components/layouts/auth/Register";
+import LoginPage from "./components/layouts/auth/LoginPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+// Placeholder dashboards — replace with real ones as you build them
+const AdminDashboard = () => <div className="p-10">Admin Dashboard</div>;
+const LandlordDashboard = () => <div className="p-10">Landlord Dashboard</div>;
+const StudentDashboard = () => <div className="p-10">Student Dashboard</div>;
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      {/* Next routes will go here as we build them, e.g.: */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      {/* <Route path="/browse" element={<BrowseRoomsPage />} /> */}
-      {/* <Route path="/dashboard" element={<LandlordDashboardPage />} /> */}
+      <Route path="/login" element={<LoginPage />} />
+
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/landlord"
+        element={
+          <ProtectedRoute allowedRoles={["landlord"]}>
+            <LandlordDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/renter"
+        element={
+          <ProtectedRoute allowedRoles={["renter"]}>
+            <StudentDashboard />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }

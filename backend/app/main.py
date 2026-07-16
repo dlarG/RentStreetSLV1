@@ -4,8 +4,20 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.core.database import get_db, engine
 from app.core.config import settings
+from app.api.v1.auth import router as auth_router
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title=settings.PROJECT_NAME)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # your Vite dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(auth_router, prefix=settings.API_V1_STR)
 
 # This decorator runs code automatically as soon as the Uvicorn server starts up
 @app.on_event("startup")
