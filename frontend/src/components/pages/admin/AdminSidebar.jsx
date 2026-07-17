@@ -61,7 +61,7 @@ function AdminSidebar({
           badge: pendingCount > 0 ? pendingCount : null,
           badgeColor: "bg-marigold text-ink",
         },
-        { label: "Tenants", icon: Users, path: "/admin/tenants" },
+        { label: "Tenants", icon: Users, path: "/admin/tenants-management" },
         { label: "Properties", icon: Building2, path: "/admin/properties" },
         {
           label: "Subscriptions",
