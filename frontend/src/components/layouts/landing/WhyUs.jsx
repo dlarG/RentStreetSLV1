@@ -43,14 +43,7 @@ function WhyUs() {
   ];
 
   return (
-    <section
-      id="why-us"
-      relative
-      bg-mist
-      py-24
-      overflow-hidden
-      className="relative bg-mist py-24 overflow-hidden"
-    >
+    <section id="why-us" className="relative bg-mist py-24 overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-marigold/5 rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-bay/5 rounded-full blur-3xl" />

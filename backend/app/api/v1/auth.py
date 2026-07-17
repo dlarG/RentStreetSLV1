@@ -1,6 +1,6 @@
 # backend/app/api/v1/auth.py
 from datetime import datetime, timedelta, timezone
-from fastapi import Form, File, UploadFile, APIRouter, Depends, HTTPException, status
+from fastapi import Form, File, Request, UploadFile, APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
@@ -10,6 +10,7 @@ from app.models.users import User, RenterProfile, LandlordProfile
 from app.schemas.auth import LoginRequest, TokenResponse, UserPublic, RegisterRequest, RegisterResponse
 from app.api.deps import get_current_user
 from app.core.files import save_upload, ALLOWED_DOCUMENT_TYPES, ALLOWED_IMAGE_TYPES
+from app.models.trust import TrustScore
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -77,6 +78,7 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(
+    request: Request,
     full_name: str = Form(...),
     email: str = Form(...),
     phone_number: str = Form(...),
@@ -85,11 +87,10 @@ async def register(
     role: str = Form(...),
     business_name: str | None = Form(None),
     profile_photo: UploadFile = File(...),
-    valid_id: UploadFile | None = File(None),
+    valid_id: UploadFile = File(...),          # now required for BOTH roles
     business_permit: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
-    # Reuse the same Pydantic validation rules as before
     try:
         payload = RegisterRequest(
             full_name=full_name, email=email, phone_number=phone_number,
@@ -104,8 +105,6 @@ async def register(
     if not is_renter:
         if not business_name or not business_name.strip():
             raise HTTPException(status_code=422, detail="Business name is required for landlord accounts.")
-        if not valid_id:
-            raise HTTPException(status_code=422, detail="A valid government ID is required for landlord accounts.")
         if not business_permit:
             raise HTTPException(status_code=422, detail="A business permit or boarding house registration certificate is required.")
 
@@ -117,8 +116,13 @@ async def register(
         raise HTTPException(status_code=409, detail=f"An account with this {field} already exists.")
 
     profile_photo_url = await save_upload(profile_photo, "profile_photos", ALLOWED_IMAGE_TYPES)
+    valid_id_url = await save_upload(
+        valid_id, "valid_ids_renters" if is_renter else "valid_ids", ALLOWED_DOCUMENT_TYPES
+    )
 
-    now = datetime.now(timezone.utc)
+    # Signal only — logged for admin duplicate-account review, never used to auto-reject.
+    client_ip = request.client.host if request.client else None
+
     user = User(
         email=email_lower,
         phone_number=payload.phone_number,
@@ -127,14 +131,18 @@ async def register(
         full_name=payload.full_name,
         profile_photo_url=profile_photo_url,
         is_active=True,
+        registration_ip=client_ip,
     )
     db.add(user)
     db.flush()
 
     if is_renter:
-        db.add(RenterProfile(user_id=user.id))
+        db.add(RenterProfile(user_id=user.id, valid_id_url=valid_id_url))
+        # Not a "starting grade" — an empty ledger. Score only moves once real
+        # events happen (on-time payments, checkout compliance, disputes, admin
+        # review). 100 here means "no deductions yet," not "verified trustworthy."
+        db.add(TrustScore(renter_id=user.id, score=100.00))
     else:
-        valid_id_url = await save_upload(valid_id, "valid_ids", ALLOWED_DOCUMENT_TYPES)
         business_permit_url = await save_upload(business_permit, "business_permits", ALLOWED_DOCUMENT_TYPES)
         db.add(LandlordProfile(
             user_id=user.id,

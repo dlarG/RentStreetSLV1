@@ -10,6 +10,10 @@ from app.schemas.admin import (
     LandlordListItem, LandlordDetail, LandlordListResponse, RejectLandlordRequest,
 )
 
+from app.models.users import RenterProfile
+from app.models.trust import TrustScore, TrustScoreEvent
+
+
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 admin_only = require_roles("admin")
@@ -137,3 +141,74 @@ def reject_landlord(
     db.commit()
 
     return get_landlord(user_id, db, admin)
+
+@router.get("/renters")
+def list_renters(
+    search: str = Query(""),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    _: User = Depends(admin_only),
+):
+    query = (
+        db.query(User, RenterProfile, TrustScore)
+        .join(RenterProfile, RenterProfile.user_id == User.id)
+        .outerjoin(TrustScore, TrustScore.renter_id == User.id)
+        .filter(User.role == "renter")
+    )
+    if search:
+        like = f"%{search}%"
+        query = query.filter(or_(User.full_name.ilike(like), User.email.ilike(like)))
+
+    total = query.count()
+    rows = query.order_by(User.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+
+    # Flag same-IP registrations as a review hint — surfaced, never enforced
+    items = []
+    for user, profile, trust in rows:
+        same_ip_count = 0
+        if user.registration_ip:
+            same_ip_count = db.query(func.count(User.id)).filter(
+                User.registration_ip == user.registration_ip, User.id != user.id
+            ).scalar()
+        items.append({
+            "id": str(user.id), "full_name": user.full_name, "email": user.email,
+            "phone_number": user.phone_number, "profile_photo_url": user.profile_photo_url,
+            "valid_id_url": profile.valid_id_url, "trust_score": float(trust.score) if trust else None,
+            "is_active": user.is_active, "registration_ip": user.registration_ip,
+            "other_accounts_same_ip": same_ip_count, "created_at": user.created_at,
+        })
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
+
+
+@router.patch("/renters/{user_id}/trust-score")
+def adjust_trust_score(
+    user_id: str, points_delta: int, reason: str,
+    db: Session = Depends(get_db), admin: User = Depends(admin_only),
+):
+    if not reason.strip():
+        raise HTTPException(status_code=422, detail="A reason is required for any trust score adjustment.")
+
+    trust = db.query(TrustScore).filter(TrustScore.renter_id == user_id).first()
+    if trust is None:
+        raise HTTPException(status_code=404, detail="No trust score record for this renter.")
+
+    trust.score = max(0, min(100, float(trust.score) + points_delta))
+    trust.last_updated = datetime.now(timezone.utc)
+
+    db.add(TrustScoreEvent(
+        renter_id=user_id, event_type="admin_adjustment",
+        points_delta=points_delta, created_by=admin.id,
+    ))
+    db.commit()
+    return {"score": float(trust.score)}
+
+
+@router.patch("/renters/{user_id}/deactivate")
+def deactivate_renter(user_id: str, db: Session = Depends(get_db), _: User = Depends(admin_only)):
+    user = db.query(User).filter(User.id == user_id, User.role == "renter").first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="Renter not found.")
+    user.is_active = False
+    db.commit()
+    return {"message": "Account deactivated."}

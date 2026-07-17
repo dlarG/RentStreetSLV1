@@ -4,7 +4,7 @@ function Hero() {
   return (
     <section
       id="home"
-      className="max-w-6xl mx-auto px-5 sm:px-8 pt-14 pb-20 md:pt-20 md:pb-28 grid md:grid-cols-2 gap-25 items-center"
+      className="max-w-6xl mx-auto min-h-[100vh] px-5 sm:px-8 pt-14 pb-20 md:pt-20 md:pb-28 grid md:grid-cols-2 gap-25 items-center"
     >
       <div>
         <h1 className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl leading-[1.05] tracking-tight">

@@ -108,11 +108,16 @@ export default function RegisterPage() {
     if (targetStep === 4) {
       const photoErr = validateFile(files.profile_photo, "Profile photo");
       if (photoErr) e.profile_photo = photoErr;
+
+      const idErr = validateFile(
+        files.valid_id,
+        isLandlord ? "Valid ID" : "Student ID"
+      );
+      if (idErr) e.valid_id = idErr;
+
       if (isLandlord) {
         if (!form.business_name.trim())
           e.business_name = "Business or establishment name is required.";
-        const idErr = validateFile(files.valid_id, "Valid ID");
-        if (idErr) e.valid_id = idErr;
         const permitErr = validateFile(
           files.business_permit,
           "Business permit"
@@ -120,6 +125,7 @@ export default function RegisterPage() {
         if (permitErr) e.business_permit = permitErr;
       }
     }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -147,10 +153,10 @@ export default function RegisterPage() {
       data.append("confirm_password", form.confirm_password);
       data.append("role", role);
       data.append("profile_photo", files.profile_photo);
+      data.append("valid_id", files.valid_id); // ✅ now sent for both roles
 
       if (isLandlord) {
         data.append("business_name", form.business_name);
-        data.append("valid_id", files.valid_id);
         data.append("business_permit", files.business_permit);
       }
 
@@ -329,6 +335,24 @@ export default function RegisterPage() {
                 kind="image"
               />
 
+              <FileField
+                label={
+                  isLandlord
+                    ? "Valid government ID"
+                    : "Student ID or valid government ID"
+                }
+                hint={
+                  isLandlord
+                    ? "Driver's license, passport, UMID, etc."
+                    : "Your SLSU ID, or a government-issued ID"
+                }
+                accept="image/*,.pdf"
+                file={files.valid_id}
+                onChange={setFile("valid_id")}
+                error={errors.valid_id}
+                kind="document"
+              />
+
               {isLandlord && (
                 <>
                   <Field
@@ -339,17 +363,6 @@ export default function RegisterPage() {
                     error={errors.business_name}
                     placeholder="Dela Cruz Boarding House"
                   />
-
-                  <FileField
-                    label="Valid government ID"
-                    hint="Driver's license, passport, UMID, etc."
-                    accept="image/*,.pdf"
-                    file={files.valid_id}
-                    onChange={setFile("valid_id")}
-                    error={errors.valid_id}
-                    kind="document"
-                  />
-
                   <FileField
                     label="Business permit / boarding house registration"
                     hint="PDF or clear photo of the certificate"
@@ -359,13 +372,14 @@ export default function RegisterPage() {
                     error={errors.business_permit}
                     kind="document"
                   />
-
-                  <p className="text-xs text-ink/50 leading-relaxed">
-                    These documents are only visible to our review team and are
-                    never shown publicly.
-                  </p>
                 </>
               )}
+
+              <p className="text-xs text-ink/50 leading-relaxed">
+                {isLandlord
+                  ? "These documents are only visible to our review team and are never shown publicly."
+                  : "Your ID helps us keep RentStreet trustworthy. It's never shown publicly — only our review team can see it."}
+              </p>
 
               {apiError && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-2xl px-5 py-4">
