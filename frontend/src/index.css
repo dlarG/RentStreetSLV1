@@ -160,3 +160,43 @@ html {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* Slide animations for modals */
+@keyframes slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.2s ease-out forwards;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.2s ease-in forwards;
+}
+
+/* Hide scrollbar for tab overflow */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
