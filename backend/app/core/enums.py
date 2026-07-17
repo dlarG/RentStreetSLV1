@@ -11,6 +11,7 @@ amenity_category_enum = PGEnum('utility', 'safety', 'lifestyle', 'connectivity',
 trust_event_type_enum = PGEnum(
     'payment_on_time', 'payment_late', 'checkout_compliant', 'checkout_violation',
     'dispute_filed', 'dispute_resolved_favor_tenant', 'dispute_resolved_favor_landlord',
+    'admin_adjustment',
     name='trust_event_type', create_type=False
 )
 dispute_status_enum = PGEnum('open', 'under_review', 'resolved_favor_tenant', 'resolved_favor_landlord', name='dispute_status', create_type=False)

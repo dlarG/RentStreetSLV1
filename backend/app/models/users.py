@@ -24,7 +24,8 @@ class User(Base):
     failed_login_attempts = Column(SmallInteger, nullable=False, server_default="0")
     locked_until = Column(TIMESTAMP(timezone=True), nullable=True)
     last_login_at = Column(TIMESTAMP(timezone=True), nullable=True)
-
+    registration_ip = Column(String(45), nullable=True)
+    
     renter_profile = relationship("RenterProfile", back_populates="user", uselist=False)
     landlord_profile = relationship(
         "LandlordProfile",
@@ -56,6 +57,7 @@ class RenterProfile(Base):
     budget_min = Column(Numeric(10, 2))
     budget_max = Column(Numeric(10, 2))
     study_habits = Column(String(30))
+    valid_id_url = Column(String)
     lifestyle_tags = Column(JSONB, server_default=text("'[]'::jsonb"))
     trust_score_consent = Column(Boolean, nullable=False, server_default=text("false"))
     trust_score_consent_at = Column(TIMESTAMP(timezone=True))

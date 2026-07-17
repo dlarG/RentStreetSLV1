@@ -194,7 +194,7 @@ function ContactUs() {
                         I'm looking for...
                       </label>
                       <select className="w-full rounded-2xl border-2 border-ink/10 px-5 py-3.5 bg-mist/50 focus:bg-white  transition-all duration-300 text-ink/60">
-                        <option value="" disabled selected>
+                        <option value="to rent" disabled selected>
                           A room to rent
                         </option>
                         <option value="renter">I want to find a room</option>

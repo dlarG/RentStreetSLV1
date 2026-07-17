@@ -239,7 +239,7 @@ function LandLordManagement() {
               setActiveTab(tab.value);
               setPage(1);
             }}
-            className={`flex-shrink-0 px-4 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all duration-300 text-left ${
+            className={`cursor-pointer flex-shrink-0 px-4 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all duration-300 text-left ${
               activeTab === tab.value
                 ? "border-bay bg-bay/5 shadow-lg shadow-bay/10"
                 : "border-ink/5 bg-white hover:border-ink/10"
@@ -259,7 +259,7 @@ function LandLordManagement() {
           {/* Mobile Search Toggle */}
           <button
             onClick={() => setShowMobileSearch(!showMobileSearch)}
-            className="sm:hidden w-9 h-9 rounded-lg bg-mist/50 hover:bg-mist flex items-center justify-center transition-colors flex-shrink-0"
+            className="cursor-pointer sm:hidden w-9 h-9 rounded-lg bg-mist/50 hover:bg-mist flex items-center justify-center transition-colors flex-shrink-0"
           >
             <Search size={16} className="text-ink/40" />
           </button>
@@ -389,7 +389,7 @@ function LandLordManagement() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => viewDetails(landlord)}
-                            className="w-9 h-9 rounded-xl bg-mist/50 hover:bg-bay/10 hover:text-bay flex items-center justify-center transition-colors"
+                            className="cursor-pointer w-9 h-9 rounded-xl bg-mist/50 hover:bg-bay/10 hover:text-bay flex items-center justify-center transition-colors"
                             title="View details"
                           >
                             <Eye size={16} />
@@ -397,7 +397,7 @@ function LandLordManagement() {
                           {landlord.approval_status !== "accepted" && (
                             <button
                               onClick={() => handleApprove(landlord)}
-                              className="w-9 h-9 rounded-xl bg-green-50 hover:bg-green-100 text-green-600 flex items-center justify-center transition-colors"
+                              className="cursor-pointer w-9 h-9 rounded-xl bg-green-50 hover:bg-green-100 text-green-600 flex items-center justify-center transition-colors"
                               title="Approve"
                             >
                               <UserCheck size={16} />
@@ -406,7 +406,7 @@ function LandLordManagement() {
                           {landlord.approval_status !== "rejected" && (
                             <button
                               onClick={() => handleReject(landlord)}
-                              className="w-9 h-9 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors"
+                              className="cursor-pointer w-9 h-9 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors"
                               title="Reject"
                             >
                               <UserX size={16} />
@@ -470,7 +470,7 @@ function LandLordManagement() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => viewDetails(landlord)}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-mist/50 hover:bg-bay/10 hover:text-bay text-xs font-medium transition-colors"
+                      className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-mist/50 hover:bg-bay/10 hover:text-bay text-xs font-medium transition-colors"
                     >
                       <Eye size={14} />
                       View
@@ -478,7 +478,7 @@ function LandLordManagement() {
                     {landlord.approval_status !== "accepted" && (
                       <button
                         onClick={() => handleApprove(landlord)}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-green-50 hover:bg-green-100 text-green-600 text-xs font-medium transition-colors"
+                        className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-green-50 hover:bg-green-100 text-green-600 text-xs font-medium transition-colors"
                       >
                         <UserCheck size={14} />
                         Approve
@@ -487,7 +487,7 @@ function LandLordManagement() {
                     {landlord.approval_status !== "rejected" && (
                       <button
                         onClick={() => handleReject(landlord)}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium transition-colors"
+                        className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium transition-colors"
                       >
                         <UserX size={14} />
                         Reject
@@ -527,7 +527,7 @@ function LandLordManagement() {
               <button
                 disabled={page === 1}
                 onClick={() => setPage((p) => p - 1)}
-                className="w-8 h-8 rounded-lg border border-ink/10 flex items-center justify-center hover:bg-mist disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="cursor-pointer w-8 h-8 rounded-lg border border-ink/10 flex items-center justify-center hover:bg-mist disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -537,7 +537,7 @@ function LandLordManagement() {
               <button
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
-                className="w-8 h-8 rounded-lg border border-ink/10 flex items-center justify-center hover:bg-mist disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="cursor-pointer w-8 h-8 rounded-lg border border-ink/10 flex items-center justify-center hover:bg-mist disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight size={16} />
               </button>
@@ -563,7 +563,7 @@ function LandLordManagement() {
               </h3>
               <button
                 onClick={() => setShowDetailsModal(false)}
-                className="w-8 h-8 rounded-xl bg-mist hover:bg-ink/10 flex items-center justify-center transition-colors flex-shrink-0"
+                className="cursor-pointer w-8 h-8 rounded-xl bg-mist hover:bg-ink/10 flex items-center justify-center transition-colors flex-shrink-0"
               >
                 <X size={16} />
               </button>
@@ -699,7 +699,7 @@ function LandLordManagement() {
                     {selectedLandlord.approval_status !== "accepted" && (
                       <button
                         onClick={() => handleApprove(selectedLandlord)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-colors"
+                        className="cursor-pointer flex-1 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-colors"
                       >
                         <Check size={16} /> Approve
                       </button>
@@ -707,7 +707,7 @@ function LandLordManagement() {
                     {selectedLandlord.approval_status !== "rejected" && (
                       <button
                         onClick={() => handleReject(selectedLandlord)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl border-2 border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors"
+                        className="cursor-pointer flex-1 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl border-2 border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors"
                       >
                         <X size={16} /> Reject
                       </button>
@@ -750,14 +750,14 @@ function LandLordManagement() {
               <button
                 onClick={() => setShowApproveModal(false)}
                 disabled={actionLoading}
-                className="w-full px-4 py-3 rounded-xl border-2 border-ink/10 text-ink/60 font-semibold hover:bg-mist transition-colors disabled:opacity-50 text-sm"
+                className="cursor-pointer w-full px-4 py-3 rounded-xl border-2 border-ink/10 text-ink/60 font-semibold hover:bg-mist transition-colors disabled:opacity-50 text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmApprove}
                 disabled={actionLoading}
-                className="w-full px-4 py-3 rounded-xl bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
+                className="cursor-pointer w-full px-4 py-3 rounded-xl bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
               >
                 {actionLoading && (
                   <Loader2 size={16} className="animate-spin" />
@@ -805,14 +805,14 @@ function LandLordManagement() {
               <button
                 onClick={() => setShowRejectModal(false)}
                 disabled={actionLoading}
-                className="w-full px-4 py-3 rounded-xl border-2 border-ink/10 text-ink/60 font-semibold hover:bg-mist transition-colors disabled:opacity-50 text-sm"
+                className="cursor-pointer w-full px-4 py-3 rounded-xl border-2 border-ink/10 text-ink/60 font-semibold hover:bg-mist transition-colors disabled:opacity-50 text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmReject}
                 disabled={!rejectionReason.trim() || actionLoading}
-                className="w-full px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 text-sm"
+                className="cursor-pointer w-full px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 text-sm"
               >
                 {actionLoading && (
                   <Loader2 size={16} className="animate-spin" />
