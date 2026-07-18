@@ -15,7 +15,7 @@ from app.models.bookings import Tenancy
 from app.models.trust import TrustScore
 from app.schemas.property import (
     BoardingHouseCreateRequest, BoardingHouseUpdateRequest, BoardingHouseListItem, BoardingHouseDetail,
-    RoomCreateRequest, RoomUpdateRequest, RoomItem, AmenityItem, TenantAtProperty,
+    RoomCreateRequest, RoomUpdateRequest, RoomItem, AmenityItem, TenantAtProperty, RoomImageItem,
 )
 
 router = APIRouter(prefix="/landlord", tags=["landlord"])
@@ -271,11 +271,6 @@ def create_room(
 ):
     bh = _own_property_or_404(property_id, landlord.id, db)
 
-    if bh.status == "pending_review":
-        raise HTTPException(
-            status_code=403,
-            detail="This property is still awaiting admin review. You can add rooms once it's approved.",
-        )
     if bh.status == "suspended":
         raise HTTPException(status_code=403, detail="This property has been suspended and can't be modified.")
 
@@ -334,6 +329,89 @@ def delete_room(room_id: str, db: Session = Depends(get_db), landlord: User = De
     db.delete(room)
     db.commit()
     return {"message": "Room deleted."}
+
+@router.get("/rooms/{room_id}/images", response_model=list[RoomImageItem])
+def list_room_images(room_id: str, db: Session = Depends(get_db), landlord: User = Depends(landlord_only)):
+    _own_room_or_404(room_id, landlord.id, db)
+    images = db.query(PropertyImage).filter(
+        PropertyImage.room_id == room_id
+    ).order_by(PropertyImage.sort_order, PropertyImage.uploaded_at).all()
+    return [RoomImageItem(id=str(i.id), url=i.image_url, is_primary=i.is_primary, sort_order=i.sort_order) for i in images]
+
+
+@router.post("/rooms/{room_id}/images", response_model=list[RoomImageItem])
+async def upload_room_images(
+    room_id: str, files: list[UploadFile] = File(...),
+    db: Session = Depends(get_db), landlord: User = Depends(landlord_only),
+):
+    _own_room_or_404(room_id, landlord.id, db)
+
+    if len(files) > 10:
+        raise HTTPException(status_code=422, detail="You can upload up to 10 images at a time.")
+
+    existing_count = db.query(func.count(PropertyImage.id)).filter(PropertyImage.room_id == room_id).scalar()
+    has_primary = db.query(PropertyImage).filter(PropertyImage.room_id == room_id, PropertyImage.is_primary == True).first() is not None
+
+    created = []
+    for i, file in enumerate(files):
+        url = await save_upload(file, "room_images", ALLOWED_IMAGE_TYPES)
+        image = PropertyImage(
+            room_id=room_id, image_url=url,
+            is_primary=(not has_primary and i == 0),  # first-ever upload becomes the cover automatically
+            sort_order=existing_count + i,
+        )
+        db.add(image)
+        created.append(image)
+
+    db.commit()
+    for img in created:
+        db.refresh(img)
+    return [RoomImageItem(id=str(i.id), url=i.image_url, is_primary=i.is_primary, sort_order=i.sort_order) for i in created]
+
+
+@router.patch("/rooms/images/{image_id}/primary")
+def set_room_image_primary(image_id: str, db: Session = Depends(get_db), landlord: User = Depends(landlord_only)):
+    image = (
+        db.query(PropertyImage)
+        .join(Room, Room.id == PropertyImage.room_id)
+        .join(BoardingHouse, BoardingHouse.id == Room.boarding_house_id)
+        .filter(PropertyImage.id == image_id, BoardingHouse.landlord_id == landlord.id)
+        .first()
+    )
+    if image is None:
+        raise HTTPException(status_code=404, detail="Image not found.")
+
+    db.query(PropertyImage).filter(PropertyImage.room_id == image.room_id).update({"is_primary": False})
+    image.is_primary = True
+    db.commit()
+    return {"message": "Cover image updated."}
+
+
+@router.delete("/rooms/images/{image_id}")
+def delete_room_image(image_id: str, db: Session = Depends(get_db), landlord: User = Depends(landlord_only)):
+    image = (
+        db.query(PropertyImage)
+        .join(Room, Room.id == PropertyImage.room_id)
+        .join(BoardingHouse, BoardingHouse.id == Room.boarding_house_id)
+        .filter(PropertyImage.id == image_id, BoardingHouse.landlord_id == landlord.id)
+        .first()
+    )
+    if image is None:
+        raise HTTPException(status_code=404, detail="Image not found.")
+
+    was_primary = image.is_primary
+    room_id = image.room_id
+    db.delete(image)
+    db.flush()
+
+    # If we just deleted the cover, promote the next remaining image automatically
+    if was_primary:
+        next_image = db.query(PropertyImage).filter(PropertyImage.room_id == room_id).order_by(PropertyImage.sort_order).first()
+        if next_image:
+            next_image.is_primary = True
+
+    db.commit()
+    return {"message": "Image deleted."}
 
 
 # ---------- Tenants across all of this landlord's properties ----------

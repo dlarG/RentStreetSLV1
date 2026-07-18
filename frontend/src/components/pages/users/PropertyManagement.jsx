@@ -161,20 +161,16 @@ function PropertyManagement() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() =>
-                      p.status !== "pending_review" && setRoomsFor(p)
-                    }
-                    disabled={p.status === "pending_review"}
+                    onClick={() => p.status !== "suspended" && setRoomsFor(p)}
+                    disabled={p.status === "suspended"}
                     className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                      p.status === "pending_review"
+                      p.status === "suspended"
                         ? "bg-ink/5 text-ink/30 cursor-not-allowed"
                         : "bg-bay/5 hover:bg-bay/10 text-bay"
                     }`}
                   >
-                    <DoorOpen size={14} />{" "}
-                    {p.status === "pending_review"
-                      ? "Awaiting Review"
-                      : "Rooms"}
+                    <DoorOpen size={14} />
+                    {p.status === "suspended" ? "Suspended" : "Rooms"}
                   </button>
                   <button
                     onClick={() => {
@@ -197,7 +193,8 @@ function PropertyManagement() {
               </div>
               {p.status === "pending_review" && (
                 <div className="bg-marigold/10 px-5 py-2.5 text-xs text-ink/60 border-t border-marigold/20">
-                  Awaiting admin review before it appears in search results.
+                  Add your rooms now — this property (including its rooms) will
+                  be reviewed together before it goes live.
                 </div>
               )}
             </div>

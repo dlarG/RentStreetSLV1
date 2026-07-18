@@ -40,6 +40,11 @@ class RoomItem(BaseModel):
     floor_level: int | None
     status: str
 
+    @field_validator("id", mode="before")
+    @classmethod
+    def stringify_id(cls, v):
+        return str(v)
+
     model_config = {"from_attributes": True}
 
 
@@ -141,3 +146,9 @@ class TenantAtProperty(BaseModel):
     start_date: str
     end_date: str | None
     status: str
+
+class RoomImageItem(BaseModel):
+    id: str
+    url: str
+    is_primary: bool
+    sort_order: int

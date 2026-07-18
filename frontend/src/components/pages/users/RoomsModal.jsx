@@ -8,8 +8,16 @@ import {
   Trash2,
   Bed,
   AlertTriangle,
+  ImagePlus,
+  Star,
+  Image as ImageIcon,
 } from "lucide-react";
+
 import api from "../../../lib/api";
+
+const API_ORIGIN = (
+  import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1"
+).replace("/api/v1", "");
 
 const ROOM_STATUS_STYLES = {
   available: "bg-green-50 text-green-600",
@@ -18,6 +26,181 @@ const ROOM_STATUS_STYLES = {
   delisted: "bg-ink/5 text-ink/40",
 };
 
+function RoomImagesModal({ room, onClose, onChanged }) {
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const fetchImages = useCallback(() => {
+    setLoading(true);
+    api
+      .get(`/landlord/rooms/${room.id}/images`)
+      .then((res) => setImages(res.data))
+      .catch(() => setError("Couldn't load images."))
+      .finally(() => setLoading(false));
+  }, [room.id]);
+
+  useEffect(() => {
+    fetchImages();
+  }, [fetchImages]);
+
+  const handleUpload = async (fileList) => {
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
+    setError("");
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      files.forEach((f) => formData.append("files", f));
+      await api.post(`/landlord/rooms/${room.id}/images`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      fetchImages();
+      onChanged();
+    } catch (err) {
+      setError(err.response?.data?.detail || "Couldn't upload images.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const setPrimary = async (imageId) => {
+    try {
+      await api.patch(`/landlord/rooms/images/${imageId}/primary`);
+      fetchImages();
+      onChanged();
+    } catch {
+      setError("Couldn't set cover image.");
+    }
+  };
+
+  const deleteImage = async (imageId) => {
+    try {
+      await api.delete(`/landlord/rooms/images/${imageId}`);
+      fetchImages();
+      onChanged();
+    } catch {
+      setError("Couldn't delete this image.");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 bg-ink/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative bg-white rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl">
+        <div className="sticky top-0 bg-white border-b border-ink/5 px-6 py-4 flex items-center justify-between rounded-t-3xl z-10">
+          <div>
+            <h3 className="font-display font-bold text-lg">Room Photos</h3>
+            <p className="text-xs text-ink/50">{room.room_label}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-xl bg-mist hover:bg-ink/10 flex items-center justify-center transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <label
+            className={`flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-4 py-6 cursor-pointer transition-all ${
+              uploading
+                ? "border-ink/10 bg-mist/50 cursor-not-allowed"
+                : "border-ink/15 hover:border-bay bg-white"
+            }`}
+          >
+            {uploading ? (
+              <>
+                <Loader2 size={18} className="animate-spin text-bay" />{" "}
+                <span className="text-sm text-ink/50">Uploading...</span>
+              </>
+            ) : (
+              <>
+                <ImagePlus size={18} className="text-ink/40" />{" "}
+                <span className="text-sm text-ink/50">
+                  Add photos (up to 10 at once)
+                </span>
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              disabled={uploading}
+              onChange={(e) => {
+                handleUpload(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </label>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+              {error}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="py-8 flex justify-center">
+              <Loader2 className="animate-spin text-bay" size={22} />
+            </div>
+          ) : images.length === 0 ? (
+            <div className="text-center py-8">
+              <ImageIcon size={26} className="text-ink/20 mx-auto mb-2" />
+              <p className="text-sm text-ink/40">No photos yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {images.map((img) => (
+                <div
+                  key={img.id}
+                  className="relative group rounded-xl overflow-hidden border-2 border-ink/10 aspect-square"
+                >
+                  <img
+                    src={`${API_ORIGIN}${img.url}`}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+
+                  {img.is_primary && (
+                    <span className="absolute top-1.5 left-1.5 bg-marigold text-ink text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Star size={10} fill="currentColor" /> Cover
+                    </span>
+                  )}
+
+                  <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/50 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                    {!img.is_primary && (
+                      <button
+                        onClick={() => setPrimary(img.id)}
+                        title="Set as cover"
+                        className="w-8 h-8 rounded-lg bg-white hover:bg-marigold hover:text-ink flex items-center justify-center transition-colors"
+                      >
+                        <Star size={14} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => deleteImage(img.id)}
+                      title="Delete"
+                      className="w-8 h-8 rounded-lg bg-white hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function RoomsModal({ property, onClose, onChanged }) {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +208,7 @@ export default function RoomsModal({ property, onClose, onChanged }) {
   const [showRoomForm, setShowRoomForm] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [imagesFor, setImagesFor] = useState(null);
 
   const fetchRooms = useCallback(() => {
     setLoading(true);
@@ -120,6 +304,13 @@ export default function RoomsModal({ property, onClose, onChanged }) {
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <button
+                      onClick={() => setImagesFor(r)}
+                      className="w-8 h-8 rounded-lg bg-white hover:bg-bay/10 hover:text-bay flex items-center justify-center transition-colors"
+                      title="Photos"
+                    >
+                      <ImagePlus size={14} />
+                    </button>
+                    <button
                       onClick={() => {
                         setEditingRoom(r);
                         setShowRoomForm(true);
@@ -162,6 +353,13 @@ export default function RoomsModal({ property, onClose, onChanged }) {
             setDeleteTarget(null);
             handleChanged();
           }}
+        />
+      )}
+      {imagesFor && (
+        <RoomImagesModal
+          room={imagesFor}
+          onClose={() => setImagesFor(null)}
+          onChanged={handleChanged}
         />
       )}
     </div>
