@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
   Bell,
@@ -12,11 +12,19 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { useAuth } from "../../../../context/AuthContext";
 
 function LandLordNavbar({ collapsed, onMenuClick }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   const notifications = [
     {
@@ -204,7 +212,10 @@ function LandLordNavbar({ collapsed, onMenuClick }) {
                       <HelpCircle size={16} /> Help
                     </Link>
                     <hr className="my-1 border-ink/5" />
-                    <button className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50 transition-colors w-full">
+                    <button
+                      onClick={handleLogout}
+                      className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50 transition-colors w-full"
+                    >
                       <LogOut size={16} /> Logout
                     </button>
                   </div>

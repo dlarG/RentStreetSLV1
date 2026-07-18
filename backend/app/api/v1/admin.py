@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
+from geoalchemy2 import Geometry
+from sqlalchemy import cast
 from sqlalchemy import or_, func
 
 from app.core.database import get_db
@@ -8,9 +10,11 @@ from app.api.deps import require_roles
 from app.models.users import User, LandlordProfile, RenterProfile
 from app.core.security import hash_password
 from app.models.bookings import RentalApplication, Tenancy
+from app.models.properties import BoardingHouse, Room, Amenity, BoardingHouseAmenity, PropertyImage
 from app.schemas.admin import (
     LandlordListItem, LandlordDetail, LandlordListResponse, RejectLandlordRequest, RenterListItem, RenterDetail, RenterListResponse,
-    RenterCreateRequest, RenterUpdateRequest, ChangePasswordRequest,
+    RenterCreateRequest, RenterUpdateRequest, ChangePasswordRequest, AdminPropertyListItem, AdminPropertyDetail, AdminPropertyListResponse,
+    AdminRoomItem, AdminAmenityItem, RejectPropertyRequest,
 )
 
 from app.models.users import RenterProfile
@@ -390,3 +394,157 @@ def delete_renter(user_id: str, db: Session = Depends(get_db), _: User = Depends
     db.delete(user)
     db.commit()
     return {"message": "Account permanently deleted."}
+
+def _property_cover(db: Session, bh_id) -> str | None:
+    img = db.query(PropertyImage).filter(
+        PropertyImage.boarding_house_id == bh_id, PropertyImage.room_id.is_(None), PropertyImage.is_primary == True
+    ).first()
+    return img.image_url if img else None
+
+
+@router.get("/properties/pending-count")
+def properties_pending_count(db: Session = Depends(get_db), _: User = Depends(admin_only)):
+    count = db.query(func.count(BoardingHouse.id)).filter(BoardingHouse.status == "pending_review").scalar()
+    return {"count": count}
+
+
+@router.get("/properties", response_model=AdminPropertyListResponse)
+def list_properties(
+    status_filter: str = Query("pending_review", alias="status"),  # active|inactive|pending_review|suspended|all
+    search: str = Query(""),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    _: User = Depends(admin_only),
+):
+    geom = cast(BoardingHouse.location, Geometry)
+    query = (
+        db.query(
+            BoardingHouse,
+            func.ST_Y(geom).label("lat"), func.ST_X(geom).label("lng"),
+            func.count(Room.id.distinct()).label("room_count"),
+            User.full_name.label("landlord_name"), User.email.label("landlord_email"),
+        )
+        .join(User, User.id == BoardingHouse.landlord_id)
+        .outerjoin(Room, Room.boarding_house_id == BoardingHouse.id)
+        .group_by(BoardingHouse.id, User.id)
+    )
+
+    if status_filter != "all":
+        valid = ("active", "inactive", "pending_review", "suspended")
+        if status_filter not in valid:
+            raise HTTPException(status_code=422, detail=f"status must be one of {valid} or all.")
+        query = query.filter(BoardingHouse.status == status_filter)
+
+    if search:
+        like = f"%{search}%"
+        query = query.filter(or_(BoardingHouse.name.ilike(like), User.full_name.ilike(like)))
+
+    total = query.count()
+    rows = query.order_by(BoardingHouse.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+
+    items = [
+        AdminPropertyListItem(
+            id=str(bh.id), name=bh.name, address_line=bh.address_line, barangay=bh.barangay,
+            municipality=bh.municipality, latitude=lat, longitude=lng, status=bh.status,
+            room_count=room_count, cover_image_url=_property_cover(db, bh.id),
+            landlord_id=str(bh.landlord_id), landlord_name=landlord_name, landlord_email=landlord_email,
+            created_at=bh.created_at,
+        )
+        for bh, lat, lng, room_count, landlord_name, landlord_email in rows
+    ]
+    return AdminPropertyListResponse(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.get("/properties/{property_id}", response_model=AdminPropertyDetail)
+def get_property(property_id: str, db: Session = Depends(get_db), _: User = Depends(admin_only)):
+    row = (
+        db.query(BoardingHouse, User)
+        .join(User, User.id == BoardingHouse.landlord_id)
+        .filter(BoardingHouse.id == property_id)
+        .first()
+    )
+    if row is None:
+        raise HTTPException(status_code=404, detail="Property not found.")
+    bh, landlord = row
+
+    geom = cast(BoardingHouse.location, Geometry)
+    lat, lng = db.query(func.ST_Y(geom), func.ST_X(geom)).filter(BoardingHouse.id == bh.id).first()
+
+    rooms = db.query(Room).filter(Room.boarding_house_id == bh.id).order_by(Room.room_label).all()
+    room_images = {}
+    if rooms:
+        imgs = db.query(PropertyImage).filter(PropertyImage.room_id.in_([r.id for r in rooms])).order_by(PropertyImage.sort_order).all()
+        for img in imgs:
+            room_images.setdefault(img.room_id, []).append({"id": str(img.id), "url": img.image_url, "is_primary": img.is_primary})
+
+    amenities = (
+        db.query(Amenity).join(BoardingHouseAmenity, BoardingHouseAmenity.amenity_id == Amenity.id)
+        .filter(BoardingHouseAmenity.boarding_house_id == bh.id).all()
+    )
+    property_images = db.query(PropertyImage).filter(
+        PropertyImage.boarding_house_id == bh.id, PropertyImage.room_id.is_(None)
+    ).order_by(PropertyImage.sort_order).all()
+    cover = next((i for i in property_images if i.is_primary), None)
+
+    return AdminPropertyDetail(
+        id=str(bh.id), name=bh.name, description=bh.description, address_line=bh.address_line,
+        barangay=bh.barangay, municipality=bh.municipality, province=bh.province,
+        latitude=lat, longitude=lng, status=bh.status,
+        curfew_time=bh.curfew_time.strftime("%H:%M") if bh.curfew_time else None,
+        allows_cooking=bh.allows_cooking, gender_policy=bh.gender_policy,
+        water_supply_rating=bh.water_supply_rating, is_sub_metered=bh.is_sub_metered,
+        room_count=len(rooms), cover_image_url=cover.image_url if cover else None,
+        landlord_id=str(landlord.id), landlord_name=landlord.full_name,
+        landlord_email=landlord.email, landlord_phone=landlord.phone_number,
+        created_at=bh.created_at,
+        amenities=[AdminAmenityItem(id=a.id, name=a.name, category=a.category) for a in amenities],
+        rooms=[
+            AdminRoomItem(
+                id=str(r.id), room_label=r.room_label, room_type=r.room_type, capacity=r.capacity,
+                base_price_monthly=float(r.base_price_monthly), has_own_bathroom=r.has_own_bathroom,
+                has_aircon=r.has_aircon, floor_level=r.floor_level, status=r.status,
+                images=room_images.get(r.id, []),
+            )
+            for r in rooms
+        ],
+        images=[{"id": str(i.id), "url": i.image_url, "is_primary": i.is_primary} for i in property_images],
+    )
+
+
+@router.patch("/properties/{property_id}/approve", response_model=AdminPropertyDetail)
+def approve_property(property_id: str, db: Session = Depends(get_db), admin: User = Depends(admin_only)):
+    bh = db.query(BoardingHouse).filter(BoardingHouse.id == property_id).first()
+    if bh is None:
+        raise HTTPException(status_code=404, detail="Property not found.")
+    bh.status = "active"
+    bh.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    return get_property(property_id, db, admin)
+
+
+@router.patch("/properties/{property_id}/reject", response_model=AdminPropertyDetail)
+def reject_property(
+    property_id: str, payload: RejectPropertyRequest,
+    db: Session = Depends(get_db), admin: User = Depends(admin_only),
+):
+    if not payload.reason.strip():
+        raise HTTPException(status_code=422, detail="A rejection reason is required.")
+    bh = db.query(BoardingHouse).filter(BoardingHouse.id == property_id).first()
+    if bh is None:
+        raise HTTPException(status_code=404, detail="Property not found.")
+    bh.status = "inactive"  # kept editable by the landlord, not destroyed — they can fix and it goes back to pending on next edit if you wire that later
+    bh.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    return get_property(property_id, db, admin)
+
+
+@router.patch("/properties/{property_id}/suspend", response_model=AdminPropertyDetail)
+def suspend_property(property_id: str, db: Session = Depends(get_db), admin: User = Depends(admin_only)):
+    bh = db.query(BoardingHouse).filter(BoardingHouse.id == property_id).first()
+    if bh is None:
+        raise HTTPException(status_code=404, detail="Property not found.")
+    bh.status = "suspended"
+    bh.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    return get_property(property_id, db, admin)

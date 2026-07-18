@@ -23,23 +23,42 @@ function AdminSidebar({
   onCloseMobile,
 }) {
   const location = useLocation();
-  const [pendingCount, setPendingCount] = useState(0);
+  const [landlordpendingCount, landlordsetPendingCount] = useState(0);
+  const [propertypendingCount, propertysetPendingCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    const fetchCount = () => {
+    const landlordfetchCount = () => {
       api
         .get("/admin/landlords/pending-count")
         .then((res) => {
-          if (!cancelled) setPendingCount(res.data.count);
+          if (!cancelled) landlordsetPendingCount(res.data.count);
         })
         .catch(() => {});
     };
-    fetchCount();
-    const interval = setInterval(fetchCount, 30000);
+    landlordfetchCount();
+    const interval = setInterval(landlordfetchCount, 30000);
     return () => {
       cancelled = true;
       clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const propertyfetchCount = () => {
+      api
+        .get("/admin/properties/pending-count")
+        .then((res) => {
+          if (!cancelled) propertysetPendingCount(res.data.count);
+        })
+        .catch(() => {});
+    };
+    propertyfetchCount();
+    const propertyinterval = setInterval(propertyfetchCount, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(propertyinterval);
     };
   }, []);
 
@@ -58,11 +77,17 @@ function AdminSidebar({
           label: "Landlords",
           icon: Building2,
           path: "/admin/landlords-management",
-          badge: pendingCount > 0 ? pendingCount : null,
-          badgeColor: "bg-marigold text-ink",
+          badge: landlordpendingCount > 0 ? landlordpendingCount : null,
+          badgeColor: "bg-marigold text-white",
         },
         { label: "Tenants", icon: Users, path: "/admin/tenants-management" },
-        { label: "Properties", icon: Building2, path: "/admin/properties" },
+        {
+          label: "Properties",
+          badge: propertypendingCount > 0 ? propertypendingCount : null,
+          icon: Building2,
+          path: "/admin/property-management",
+          badgeColor: "bg-marigold text-white",
+        },
         {
           label: "Subscriptions",
           icon: CreditCard,

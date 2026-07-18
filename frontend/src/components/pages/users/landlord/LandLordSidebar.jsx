@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Building2,
@@ -16,12 +16,18 @@ import {
   Calendar,
 } from "lucide-react";
 import api from "../../../../lib/api";
+import { useAuth } from "../../../../context/AuthContext";
 
 function LandLordSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
   const location = useLocation();
+  const { logout } = useAuth();
   const [pendingApplications, setPendingApplications] = useState(0);
   const [unpaidTenants, setUnpaidTenants] = useState(0);
-
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
   const sidebarLinks = [
     {
       section: "Overview",
@@ -229,15 +235,18 @@ function LandLordSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
 
       {/* Footer */}
       <div className="border-t border-ink/5 p-3 flex-shrink-0">
-        <button
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-ink/60 hover:bg-red-50 hover:text-red-600 transition-colors w-full ${
-            collapsed ? "justify-center" : ""
-          }`}
-          title={collapsed ? "Logout" : undefined}
-        >
-          <LogOut size={20} />
-          {!collapsed && <span className="text-sm font-medium">Logout</span>}
-        </button>
+        <div className="border-t border-ink/5 p-3 flex-shrink-0">
+          <button
+            onClick={handleLogout}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-ink/60 hover:bg-red-50 hover:text-red-600 transition-colors w-full ${
+              collapsed ? "justify-center" : ""
+            }`}
+            title={collapsed ? "Logout" : undefined}
+          >
+            <LogOut size={20} />
+            {!collapsed && <span className="text-sm font-medium">Logout</span>}
+          </button>
+        </div>
       </div>
     </>
   );

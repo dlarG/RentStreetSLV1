@@ -106,3 +106,63 @@ class ChangePasswordRequest(BaseModel):
     @classmethod
     def check_password(cls, v: str) -> str:
         return _validate_password_strength(v)
+    
+class AdminRoomItem(BaseModel):
+    id: str
+    room_label: str
+    room_type: str
+    capacity: int
+    base_price_monthly: float
+    has_own_bathroom: bool
+    has_aircon: bool
+    floor_level: int | None
+    status: str
+    images: list[dict]
+
+
+class AdminAmenityItem(BaseModel):
+    id: int
+    name: str
+    category: str
+
+
+class AdminPropertyListItem(BaseModel):
+    id: str
+    name: str
+    address_line: str | None
+    barangay: str | None
+    municipality: str
+    latitude: float
+    longitude: float
+    status: str
+    room_count: int
+    cover_image_url: str | None
+    landlord_id: str
+    landlord_name: str
+    landlord_email: str
+    created_at: datetime
+
+
+class AdminPropertyDetail(AdminPropertyListItem):
+    description: str | None
+    province: str
+    curfew_time: str | None
+    allows_cooking: bool
+    gender_policy: str
+    water_supply_rating: int | None
+    is_sub_metered: bool
+    landlord_phone: str | None
+    amenities: list[AdminAmenityItem]
+    rooms: list[AdminRoomItem]
+    images: list[dict]
+
+
+class AdminPropertyListResponse(BaseModel):
+    items: list[AdminPropertyListItem]
+    total: int
+    page: int
+    page_size: int
+
+
+class RejectPropertyRequest(BaseModel):
+    reason: str

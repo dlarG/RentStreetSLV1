@@ -16,6 +16,7 @@ import LandLordManagement from "./components/pages/admin/LandLordManagement";
 import NotFound from "./components/pages/NotFound";
 import TenantManagement from "./components/pages/admin/TenantManagement";
 import AdminDashboard from "./components/pages/admin/AdminDashboard";
+import AdminPropertyManagement from "./components/pages/admin/AdminPropertyManagement";
 
 // Landlord components import
 import LandLordDashboard from "./components/pages/users/landlord/LandLordDashboard";
@@ -41,6 +42,10 @@ function App() {
         <Route index element={<AdminOverview />} />
         <Route path="landlords-management" element={<LandLordManagement />} />
         <Route path="tenants-management" element={<TenantManagement />} />
+        <Route
+          path="property-management"
+          element={<AdminPropertyManagement />}
+        />
       </Route>
       {/* Landlord Routes */}
       <Route
