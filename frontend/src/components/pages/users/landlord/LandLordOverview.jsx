@@ -21,9 +21,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import api from "../../../lib/api";
+import api from "../../../../lib/api";
 
-function LandlordOverview() {
+function LandLordOverview() {
   const [stats, setStats] = useState({
     totalProperties: 0,
     activeTenants: 0,
@@ -305,4 +305,4 @@ function LandlordOverview() {
   );
 }
 
-export default LandlordOverview;
+export default LandLordOverview;

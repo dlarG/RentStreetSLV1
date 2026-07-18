@@ -1,19 +1,27 @@
 import { Routes, Route } from "react-router-dom";
+// Landing Page
 import LandingPage from "./components/pages/LandingPage";
+
+// Auths
 import LoginPage from "./components/layouts/auth/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RegisterPage from "./components/layouts/auth/RegisterPage";
-import AdminDashboard from "./components/pages/admin/AdminDashboard";
-import LandLordDashboard from "./components/pages/users/LandLordDashboard";
-import LandlordOverview from "./components/pages/users/LandLordOverview";
-import PropertyManagement from "./components/pages/users/PropertyManagement";
-import MyTenants from "./components/pages/users/MyTenant";
 
+// Tenant Component Import
 import TenantDashboard from "./components/pages/users/TenantDashboard";
+
+// Admin Components Import
 import AdminOverview from "./components/pages/admin/AdminOverview";
 import LandLordManagement from "./components/pages/admin/LandLordManagement";
 import NotFound from "./components/pages/NotFound";
 import TenantManagement from "./components/pages/admin/TenantManagement";
+import AdminDashboard from "./components/pages/admin/AdminDashboard";
+
+// Landlord components import
+import LandLordDashboard from "./components/pages/users/landlord/LandLordDashboard";
+import LandLordOverview from "./components/pages/users/landlord/LandLordOverview";
+import PropertyManagement from "./components/pages/users/landlord/PropertyManagement";
+// import MyTenants from "./components/pages/users/MyTenant";
 
 function App() {
   return (
@@ -43,9 +51,9 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<LandlordOverview />} />
+        <Route index element={<LandLordOverview />} />
         <Route path="properties" element={<PropertyManagement />} />
-        <Route path="tenants" element={<MyTenants />} />
+        {/* <Route path="tenants" element={<MyTenants />} /> */}
       </Route>
       {/* Renter routes */}
       <Route

@@ -13,7 +13,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 
-import api from "../../../lib/api";
+import api from "../../../../lib/api";
 
 const API_ORIGIN = (
   import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1"

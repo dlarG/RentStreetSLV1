@@ -15,7 +15,7 @@ import {
   MessageSquare,
   Calendar,
 } from "lucide-react";
-import api from "../../../lib/api";
+import api from "../../../../lib/api";
 
 function LandLordSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
   const location = useLocation();

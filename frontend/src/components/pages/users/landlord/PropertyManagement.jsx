@@ -10,10 +10,10 @@ import {
   DoorOpen,
   AlertTriangle,
 } from "lucide-react";
-import api from "../../../lib/api";
+import api from "../../../../lib/api";
 import PropertyFormModal from "./PropertyFormModal";
 import RoomsModal from "./RoomsModal";
-import "../../../lib/leafletIconFix";
+import "../../../../lib/leafletIconFix";
 
 const API_ORIGIN = (
   import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1"
@@ -163,10 +163,10 @@ function PropertyManagement() {
                   <button
                     onClick={() => p.status !== "suspended" && setRoomsFor(p)}
                     disabled={p.status === "suspended"}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                    className={`cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                       p.status === "suspended"
-                        ? "bg-ink/5 text-ink/30 cursor-not-allowed"
-                        : "bg-bay/5 hover:bg-bay/10 text-bay"
+                        ? "bg-bay text-white cursor-not-allowed"
+                        : "bg-bay hover:bg-bay-deep text-white"
                     }`}
                   >
                     <DoorOpen size={14} />
@@ -177,14 +177,14 @@ function PropertyManagement() {
                       setEditingProperty(p);
                       setShowForm(true);
                     }}
-                    className="w-9 h-9 rounded-xl bg-mist hover:bg-marigold/10 hover:text-marigold flex items-center justify-center transition-colors"
+                    className="cursor-pointer w-9 h-9 rounded-xl bg-mist hover:bg-marigold/10 hover:text-marigold flex items-center justify-center transition-colors"
                     title="Edit"
                   >
                     <Edit3 size={15} />
                   </button>
                   <button
                     onClick={() => setDeleteTarget(p)}
-                    className="w-9 h-9 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors"
+                    className="cursor-pointer w-9 h-9 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={15} />

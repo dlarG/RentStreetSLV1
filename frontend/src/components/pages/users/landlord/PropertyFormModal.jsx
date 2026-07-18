@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Loader2, MapPin, Camera, Image as ImageIcon } from "lucide-react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
-import api from "../../../lib/api";
+import api from "../../../../lib/api";
 
 // Sogod, Southern Leyte — sensible default center for a new pin
 const DEFAULT_CENTER = [10.3833, 124.9833];
@@ -158,7 +158,7 @@ export default function PropertyFormModal({ property, onClose, onSaved }) {
           </h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-mist hover:bg-ink/10 flex items-center justify-center transition-colors"
+            className="cursor-pointer w-8 h-8 rounded-xl bg-mist hover:bg-ink/10 flex items-center justify-center transition-colors"
           >
             <X size={16} />
           </button>
@@ -371,10 +371,10 @@ export default function PropertyFormModal({ property, onClose, onSaved }) {
                           key={a.id}
                           type="button"
                           onClick={() => toggleAmenity(a.id)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-colors ${
+                          className={`cursor-pointer px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-colors ${
                             selectedAmenities.has(a.id)
-                              ? "border-bay bg-bay/10 text-bay"
-                              : "border-ink/10 text-ink/60 hover:border-ink/20"
+                              ? "border-ink bg-ink text-ink"
+                              : "border-marigold text-white bg-papaya hover:border-papaya"
                           }`}
                         >
                           {a.name}
@@ -400,7 +400,7 @@ export default function PropertyFormModal({ property, onClose, onSaved }) {
             <button
               type="submit"
               disabled={saving}
-              className="btn-primary w-full rounded-xl py-3.5 flex items-center justify-center gap-2 disabled:opacity-50"
+              className="cursor-pointer btn-primary w-full rounded-xl py-3.5 flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 size={18} className="animate-spin" />
