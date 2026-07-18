@@ -5,6 +5,10 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RegisterPage from "./components/layouts/auth/RegisterPage";
 import AdminDashboard from "./components/pages/admin/AdminDashboard";
 import LandLordDashboard from "./components/pages/users/LandLordDashboard";
+import LandlordOverview from "./components/pages/users/LandLordOverview";
+import PropertyManagement from "./components/pages/users/PropertyManagement";
+import MyTenants from "./components/pages/users/MyTenant";
+
 import TenantDashboard from "./components/pages/users/TenantDashboard";
 import AdminOverview from "./components/pages/admin/AdminOverview";
 import LandLordManagement from "./components/pages/admin/LandLordManagement";
@@ -17,7 +21,7 @@ function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-
+      {/* Admin routes */}
       <Route
         path="/admin"
         element={
@@ -30,6 +34,7 @@ function App() {
         <Route path="landlords-management" element={<LandLordManagement />} />
         <Route path="tenants-management" element={<TenantManagement />} />
       </Route>
+      {/* Landlord Routes */}
       <Route
         path="/landlord"
         element={
@@ -37,7 +42,12 @@ function App() {
             <LandLordDashboard />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<LandlordOverview />} />
+        <Route path="properties" element={<PropertyManagement />} />
+        <Route path="tenants" element={<MyTenants />} />
+      </Route>
+      {/* Renter routes */}
       <Route
         path="/renter"
         element={

@@ -34,7 +34,8 @@ class BoardingHouse(Base):
     status = Column(property_status_enum, nullable=False, server_default="pending_review")
     created_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"))
     updated_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"))
-
+    registration_image_url = Column(String)
+    
     rooms = relationship("Room", back_populates="boarding_house", cascade="all, delete-orphan")
     amenities = relationship("Amenity", secondary="boarding_house_amenities")
 
