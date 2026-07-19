@@ -197,8 +197,8 @@ function AdminSidebar({
                       to={item.path}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${
                         isActive
-                          ? "bg-bay text-white shadow-lg shadow-bay/20"
-                          : "text-ink/60 hover:bg-mist hover:text-ink"
+                          ? "bg-papaya text-white shadow-lg shadow-papaya/20"
+                          : "text-ink hover:bg-[#faf8f2] hover:text-[#f2a93b]"
                       }`}
                       title={!showLabel ? item.label : undefined}
                     >

@@ -83,7 +83,7 @@ function AdminNavbar({ collapsed, onOpenMobileSidebar }) {
         <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0 ml-auto">
           <button className="hidden md:flex cursor-pointer relative w-10 h-10 rounded-xl bg-mist/50 hover:bg-mist items-center justify-center transition-colors">
             <MessageSquare size={18} className="text-ink/60" />
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-bay text-white text-[10px] font-bold flex items-center justify-center rounded-full">
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-marigold text-white text-[10px] font-bold flex items-center justify-center rounded-full">
               3
             </span>
           </button>
@@ -94,7 +94,7 @@ function AdminNavbar({ collapsed, onOpenMobileSidebar }) {
               className="cursor-pointer relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-mist/50 hover:bg-mist flex items-center justify-center transition-colors"
             >
               <Bell size={18} className="text-ink/60" />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full">
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-marigold text-white text-[10px] font-bold flex items-center justify-center rounded-full">
                 2
               </span>
             </button>
@@ -177,21 +177,21 @@ function AdminNavbar({ collapsed, onOpenMobileSidebar }) {
                   <div className="p-2">
                     <Link
                       to="/admin/profile"
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink/60 hover:bg-mist hover:text-ink transition-colors"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink/60 hover:bg-[#faf8f2] hover:text-ink transition-colors"
                     >
                       <User size={16} />
                       Profile
                     </Link>
                     <Link
                       to="/admin/settings"
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink/60 hover:bg-mist hover:text-ink transition-colors"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink/60 hover:bg-[#faf8f2] hover:text-ink transition-colors"
                     >
                       <Settings size={16} />
                       Settings
                     </Link>
                     <Link
                       to="/admin/help"
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink/60 hover:bg-mist hover:text-ink transition-colors"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink/60 hover:bg-[#faf8f2] hover:text-ink transition-colors"
                     >
                       <HelpCircle size={16} />
                       Help

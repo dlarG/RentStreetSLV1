@@ -239,7 +239,7 @@ function LandLordManagement() {
               setActiveTab(tab.value);
               setPage(1);
             }}
-            className={`cursor-pointer flex-shrink-0 px-4 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all duration-300 text-left ${
+            className={`cursor-pointer flex-shrink-0 px-4 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border-1 transition-all duration-300 text-left ${
               activeTab === tab.value
                 ? "border-bay bg-bay/5 shadow-lg shadow-bay/10"
                 : "border-ink/5 bg-white hover:border-ink/10"
@@ -275,7 +275,7 @@ function LandLordManagement() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name, email, or business..."
-              className="w-full rounded-xl border-2 border-ink/5 pl-10 pr-4 py-2.5 bg-mist/30 focus:bg-white focus:outline-none focus:border-bay/30 text-sm transition-all"
+              className="w-full rounded-xl border-1 border-ink/5 pl-10 pr-4 py-2.5 bg-mist/30 focus:bg-white focus:outline-none focus:border-bay/30 text-sm transition-all"
             />
           </div>
 
