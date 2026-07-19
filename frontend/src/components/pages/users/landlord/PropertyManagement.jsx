@@ -116,13 +116,13 @@ function PropertyManagement() {
           </button>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-5">
           {properties.map((p) => (
             <div
               key={p.id}
               className="bg-white rounded-2xl border border-ink/5 overflow-hidden hover:shadow-lg hover:shadow-ink/5 transition-all"
             >
-              <div className="h-40 bg-mist relative">
+              <div className="h-48 sm:h-52 bg-mist relative">
                 {p.cover_image_url ? (
                   <img
                     src={`${API_ORIGIN}${p.cover_image_url}`}
@@ -131,11 +131,11 @@ function PropertyManagement() {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Building2 size={32} className="text-ink/15" />
+                    <Building2 size={40} className="text-ink/15" />
                   </div>
                 )}
                 <span
-                  className={`absolute top-3 right-3 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm ${
+                  className={`absolute top-3 right-3 text-xs font-semibold px-3 py-1 rounded-full shadow-sm ${
                     STATUS_STYLES[p.status]
                   }`}
                 >
@@ -143,33 +143,33 @@ function PropertyManagement() {
                 </span>
               </div>
 
-              <div className="p-5">
-                <h3 className="font-display font-bold text-lg leading-tight mb-3">
+              <div className="p-6">
+                <h3 className="font-display font-bold text-xl leading-tight mb-4">
                   {p.name}
                 </h3>
-                <div className="flex items-start gap-1.5 text-sm text-ink/60 mb-4">
-                  <MapPin size={14} className="flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2 text-base text-ink/60 mb-5">
+                  <MapPin size={16} className="flex-shrink-0 mt-0.5" />
                   <span>
                     {[p.address_line, p.barangay, p.municipality]
                       .filter(Boolean)
                       .join(", ")}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 text-sm text-ink/50 mb-5">
-                  <DoorOpen size={14} />
+                <div className="flex items-center gap-2 text-base text-ink/50 mb-6">
+                  <DoorOpen size={16} />
                   {p.room_count} {p.room_count === 1 ? "room" : "rooms"}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={() => p.status !== "suspended" && setRoomsFor(p)}
                     disabled={p.status === "suspended"}
-                    className={`cursor-pointer flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                    className={`cursor-pointer flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
                       p.status === "suspended"
                         ? "bg-bay text-white cursor-not-allowed"
                         : "bg-bay hover:bg-bay-deep text-white"
                     }`}
                   >
-                    <DoorOpen size={14} />
+                    <DoorOpen size={16} />
                     {p.status === "suspended" ? "Suspended" : "Rooms"}
                   </button>
                   <button
@@ -177,34 +177,34 @@ function PropertyManagement() {
                       setEditingProperty(p);
                       setShowForm(true);
                     }}
-                    className="cursor-pointer w-9 h-9 rounded-xl bg-mist hover:bg-marigold/10 hover:text-marigold flex items-center justify-center transition-colors"
+                    className="cursor-pointer w-11 h-11 rounded-xl bg-mist hover:bg-marigold/10 hover:text-marigold flex items-center justify-center transition-colors"
                     title="Edit"
                   >
-                    <Edit3 size={15} />
+                    <Edit3 size={18} />
                   </button>
                   <button
                     onClick={() => setDeleteTarget(p)}
-                    className="cursor-pointer w-9 h-9 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors"
+                    className="cursor-pointer w-11 h-11 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors"
                     title="Delete"
                   >
-                    <Trash2 size={15} />
+                    <Trash2 size={18} />
                   </button>
                 </div>
               </div>
               {p.status === "pending_review" && (
-                <div className="bg-marigold/10 px-5 py-2.5 text-xs text-ink/60 border-t border-marigold/20">
+                <div className="bg-marigold/10 px-6 py-3 text-sm text-ink/60 border-t border-marigold/20">
                   Add your rooms now — this property will be reviewed together
                   before it goes live.
                 </div>
               )}
               {p.status === "inactive" && p.rejection_reason && (
-                <div className="bg-red-50 px-5 py-2.5 text-xs text-red-700 border-t border-red-200">
+                <div className="bg-red-50 px-6 py-3 text-sm text-red-700 border-t border-red-200">
                   <span className="font-semibold">Needs changes:</span>{" "}
                   {p.rejection_reason}
                 </div>
               )}
               {p.status === "suspended" && (
-                <div className="bg-red-50 px-5 py-2.5 text-xs text-red-700 border-t border-red-200">
+                <div className="bg-red-50 px-6 py-3 text-sm text-red-700 border-t border-red-200">
                   Suspended by our team. Contact support for details.
                 </div>
               )}

@@ -37,7 +37,7 @@ const statsCards = [
     change: "+8.2%",
     trend: "up",
     icon: Building2,
-    color: "bg-green-50 text-green-600",
+    color: "bg-green-50 text-papaya",
   },
   {
     label: "Pending Approvals",
@@ -156,7 +156,7 @@ function AdminOverview() {
                 <div
                   className={`flex items-center gap-1 text-[10px] sm:text-xs font-semibold rounded-full px-2 py-0.5 ${
                     stat.trend === "up"
-                      ? "bg-green-50 text-green-600"
+                      ? "bg-papaya-50 text-papaya"
                       : "bg-red-50 text-red-600"
                   }`}
                 >
@@ -190,7 +190,7 @@ function AdminOverview() {
               </h3>
               <p className="text-xs sm:text-sm text-ink/40">Monthly average</p>
             </div>
-            <div className="flex items-center gap-1 text-xs sm:text-sm text-green-600 font-semibold">
+            <div className="flex items-center gap-1 text-xs sm:text-sm text-papaya font-semibold">
               <TrendingUp size={14} className="sm:w-4 sm:h-4" />
               +5.3%
             </div>
@@ -223,10 +223,10 @@ function AdminOverview() {
                 <Line
                   type="monotone"
                   dataKey="rate"
-                  stroke="#0E5C56"
+                  stroke="#c89d6c"
                   strokeWidth={2}
-                  dot={{ fill: "#0E5C56", strokeWidth: 2, r: 3 }}
-                  activeDot={{ r: 5, fill: "#0E5C56" }}
+                  dot={{ fill: "#c89d6c", strokeWidth: 2, r: 3 }}
+                  activeDot={{ r: 5, fill: "#c89d6c" }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -244,7 +244,7 @@ function AdminOverview() {
                 Subscription & listing fees
               </p>
             </div>
-            <div className="flex items-center gap-1 text-xs sm:text-sm text-green-600 font-semibold">
+            <div className="flex items-center gap-1 text-xs sm:text-sm text-papaya font-semibold">
               <TrendingUp size={14} className="sm:w-4 sm:h-4" />
               +18.3%
             </div>
@@ -275,7 +275,7 @@ function AdminOverview() {
                 />
                 <Bar
                   dataKey="amount"
-                  fill="#0E5C56"
+                  fill="#c89d6c"
                   radius={[6, 6, 0, 0]}
                   maxBarSize={30}
                 />
@@ -313,7 +313,7 @@ function AdminOverview() {
                     : activity.type === "dispute"
                     ? "bg-orange-50 text-orange-600"
                     : activity.type === "approval"
-                    ? "bg-green-50 text-green-600"
+                    ? "bg-green-50 text-papaya"
                     : activity.type === "subscription"
                     ? "bg-purple-50 text-purple-600"
                     : "bg-gray-50 text-gray-600"
