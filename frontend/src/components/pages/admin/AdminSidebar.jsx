@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import api from "../../../lib/api";
+import { useAuth } from "../../../context/AuthContext";
 
 function AdminSidebar({
   collapsed,
@@ -23,23 +24,49 @@ function AdminSidebar({
   onCloseMobile,
 }) {
   const location = useLocation();
-  const [pendingCount, setPendingCount] = useState(0);
+  const [landlordpendingCount, landlordsetPendingCount] = useState(0);
+  const [propertypendingCount, propertysetPendingCount] = useState(0);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   useEffect(() => {
     let cancelled = false;
-    const fetchCount = () => {
+    const landlordfetchCount = () => {
       api
         .get("/admin/landlords/pending-count")
         .then((res) => {
-          if (!cancelled) setPendingCount(res.data.count);
+          if (!cancelled) landlordsetPendingCount(res.data.count);
         })
         .catch(() => {});
     };
-    fetchCount();
-    const interval = setInterval(fetchCount, 30000);
+    landlordfetchCount();
+    const interval = setInterval(landlordfetchCount, 30000);
     return () => {
       cancelled = true;
       clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const propertyfetchCount = () => {
+      api
+        .get("/admin/properties/pending-count")
+        .then((res) => {
+          if (!cancelled) propertysetPendingCount(res.data.count);
+        })
+        .catch(() => {});
+    };
+    propertyfetchCount();
+    const propertyinterval = setInterval(propertyfetchCount, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(propertyinterval);
     };
   }, []);
 
@@ -58,11 +85,17 @@ function AdminSidebar({
           label: "Landlords",
           icon: Building2,
           path: "/admin/landlords-management",
-          badge: pendingCount > 0 ? pendingCount : null,
-          badgeColor: "bg-marigold text-ink",
+          badge: landlordpendingCount > 0 ? landlordpendingCount : null,
+          badgeColor: "bg-marigold text-white",
         },
         { label: "Tenants", icon: Users, path: "/admin/tenants-management" },
-        { label: "Properties", icon: Building2, path: "/admin/properties" },
+        {
+          label: "Properties",
+          badge: propertypendingCount > 0 ? propertypendingCount : null,
+          icon: Building2,
+          path: "/admin/property-management",
+          badgeColor: "bg-marigold text-white",
+        },
         {
           label: "Subscriptions",
           icon: CreditCard,
@@ -107,7 +140,7 @@ function AdminSidebar({
           {/* Desktop collapse toggle — hidden on mobile, replaced by the X below */}
           <button
             onClick={onToggleCollapse}
-            className="hidden lg:flex w-8 h-8 rounded-lg bg-mist items-center justify-center hover:bg-bay/10 transition-colors flex-shrink-0"
+            className="cursor-pointer hidden lg:flex w-8 h-8 rounded-lg bg-mist items-center justify-center hover:bg-bay/10 transition-colors flex-shrink-0"
           >
             {collapsed ? (
               <ChevronRight size={16} className="text-ink/60" />
@@ -121,14 +154,14 @@ function AdminSidebar({
               to="/admin"
               className="flex items-center gap-2 flex-1 min-w-0"
             >
-              <div className="w-8 h-8 rounded-full bg-bay flex items-center justify-center flex-shrink-0 overflow-hidden">
+              <div className="w-9 h-9 rounded-full bg-bay flex items-center justify-center flex-shrink-0 overflow-hidden">
                 <img
                   src="/asset/logo/5-circled-modified.png"
                   alt=""
                   className="w-full h-full object-cover"
                 />
               </div>
-              <span className="font-display font-extrabold text-sm truncate">
+              <span className="font-display font-extrabold text-lg truncate">
                 <span className="text-papaya">Rent</span>Street
               </span>
             </Link>
@@ -212,7 +245,8 @@ function AdminSidebar({
           style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
         >
           <button
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-ink/60 hover:bg-red-50 hover:text-red-600 transition-colors w-full ${
+            onClick={handleLogout}
+            className={`cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-xl text-ink/60 hover:bg-red-50 hover:text-red-600 transition-colors w-full ${
               collapsed && !mobileOpen ? "lg:justify-center" : ""
             }`}
           >
