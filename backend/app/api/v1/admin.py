@@ -498,6 +498,7 @@ def get_property(property_id: str, db: Session = Depends(get_db), _: User = Depe
         landlord_id=str(landlord.id), landlord_name=landlord.full_name,
         landlord_email=landlord.email, landlord_phone=landlord.phone_number,
         created_at=bh.created_at,
+        rejection_reason=bh.rejection_reason, suspension_reason=bh.suspension_reason,
         amenities=[AdminAmenityItem(id=a.id, name=a.name, category=a.category) for a in amenities],
         rooms=[
             AdminRoomItem(
@@ -517,7 +518,13 @@ def approve_property(property_id: str, db: Session = Depends(get_db), admin: Use
     bh = db.query(BoardingHouse).filter(BoardingHouse.id == property_id).first()
     if bh is None:
         raise HTTPException(status_code=404, detail="Property not found.")
+    if bh.status not in ("pending_review", "inactive"):
+        raise HTTPException(status_code=409, detail=f"Can't approve a property that is currently {bh.status}.")
+
     bh.status = "active"
+    bh.rejection_reason = None
+    bh.status_updated_by = admin.id
+    bh.status_updated_at = datetime.now(timezone.utc)
     bh.updated_at = datetime.now(timezone.utc)
     db.commit()
     return get_property(property_id, db, admin)
@@ -533,18 +540,35 @@ def reject_property(
     bh = db.query(BoardingHouse).filter(BoardingHouse.id == property_id).first()
     if bh is None:
         raise HTTPException(status_code=404, detail="Property not found.")
-    bh.status = "inactive"  # kept editable by the landlord, not destroyed — they can fix and it goes back to pending on next edit if you wire that later
+    if bh.status != "pending_review":
+        raise HTTPException(status_code=409, detail="Only properties awaiting review can be rejected.")
+
+    bh.status = "inactive"
+    bh.rejection_reason = payload.reason.strip()
+    bh.status_updated_by = admin.id
+    bh.status_updated_at = datetime.now(timezone.utc)
     bh.updated_at = datetime.now(timezone.utc)
     db.commit()
     return get_property(property_id, db, admin)
 
 
 @router.patch("/properties/{property_id}/suspend", response_model=AdminPropertyDetail)
-def suspend_property(property_id: str, db: Session = Depends(get_db), admin: User = Depends(admin_only)):
+def suspend_property(
+    property_id: str, payload: RejectPropertyRequest,  # reused shape: { reason: str }
+    db: Session = Depends(get_db), admin: User = Depends(admin_only),
+):
+    if not payload.reason.strip():
+        raise HTTPException(status_code=422, detail="A suspension reason is required.")
     bh = db.query(BoardingHouse).filter(BoardingHouse.id == property_id).first()
     if bh is None:
         raise HTTPException(status_code=404, detail="Property not found.")
+    if bh.status == "suspended":
+        raise HTTPException(status_code=409, detail="This property is already suspended.")
+
     bh.status = "suspended"
+    bh.suspension_reason = payload.reason.strip()
+    bh.status_updated_by = admin.id
+    bh.status_updated_at = datetime.now(timezone.utc)
     bh.updated_at = datetime.now(timezone.utc)
     db.commit()
     return get_property(property_id, db, admin)

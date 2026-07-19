@@ -155,6 +155,8 @@ class AdminPropertyDetail(AdminPropertyListItem):
     amenities: list[AdminAmenityItem]
     rooms: list[AdminRoomItem]
     images: list[dict]
+    rejection_reason: str | None = None
+    suspension_reason: str | None = None
 
 
 class AdminPropertyListResponse(BaseModel):

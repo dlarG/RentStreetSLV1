@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, time, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import func, cast
@@ -161,6 +161,7 @@ def get_property(property_id: str, db: Session = Depends(get_db), landlord: User
         room_count=len(rooms), created_at=bh.created_at,
         cover_image_url=cover.image_url if cover else None,
         amenities=[AmenityItem.model_validate(a) for a in amenities],
+        rejection_reason=bh.rejection_reason,
         rooms=[RoomItem.model_validate(r) for r in rooms],
         images=[{"id": str(i.id), "url": i.image_url, "is_primary": i.is_primary} for i in images],
     )
@@ -171,6 +172,16 @@ def update_property(
     db: Session = Depends(get_db), landlord: User = Depends(landlord_only),
 ):
     bh = _own_property_or_404(property_id, landlord.id, db)
+
+    if bh.status == "suspended":
+        raise HTTPException(
+            status_code=403,
+            detail="This property is suspended and can't be edited. Contact support to resolve this.",
+        )
+
+    # A landlord editing a rejected (inactive) property is treated as a
+    # resubmission — back into the review queue automatically.
+    was_inactive = bh.status == "inactive"
 
     if payload.status is not None:
         if payload.status not in ("active", "inactive"):
@@ -201,7 +212,11 @@ def update_property(
         for amenity_id in payload.amenity_ids:
             db.add(BoardingHouseAmenity(boarding_house_id=bh.id, amenity_id=amenity_id))
 
-    bh.updated_at = datetime.now()
+    if was_inactive:
+        bh.status = "pending_review"
+        bh.rejection_reason = None
+
+    bh.updated_at = datetime.now(timezone.utc)
     db.commit()
     return get_property(property_id, db, landlord)
 

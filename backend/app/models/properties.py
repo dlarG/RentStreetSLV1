@@ -32,9 +32,14 @@ class BoardingHouse(Base):
     water_supply_rating = Column(SmallInteger)
     is_sub_metered = Column(Boolean, nullable=False, server_default=text("true"))
     status = Column(property_status_enum, nullable=False, server_default="pending_review")
+    rejection_reason = Column(String, nullable=True)
+    suspension_reason = Column(String, nullable=True)
+    status_updated_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    status_updated_at = Column(TIMESTAMP(timezone=True), nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"))
     updated_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"))
     registration_image_url = Column(String)
+    
     
     rooms = relationship("Room", back_populates="boarding_house", cascade="all, delete-orphan")
     amenities = relationship("Amenity", secondary="boarding_house_amenities")

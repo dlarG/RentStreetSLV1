@@ -14,6 +14,7 @@ import {
   User,
   Mail,
   Phone,
+  ShieldAlert,
   Bed,
   DoorOpen,
 } from "lucide-react";
@@ -110,7 +111,7 @@ function AdminPropertyManagement() {
               setActiveTab(tab.value);
               setPage(1);
             }}
-            className={`p-4 rounded-2xl border-2 transition-all text-left ${
+            className={`cursor-pointer p-4 rounded-2xl border-2 transition-all text-left ${
               activeTab === tab.value
                 ? "border-bay bg-bay/5 shadow-lg shadow-bay/10"
                 : "border-ink/5 bg-white hover:border-ink/10"
@@ -228,7 +229,7 @@ function AdminPropertyManagement() {
                       <div className="flex items-center justify-end">
                         <button
                           onClick={() => setDetailId(p.id)}
-                          className="w-9 h-9 rounded-xl bg-mist/50 hover:bg-bay/10 hover:text-bay flex items-center justify-center transition-colors"
+                          className="cursor-pointer w-9 h-9 rounded-xl bg-mist/50 hover:bg-bay/10 hover:text-bay flex items-center justify-center transition-colors"
                           title="Review"
                         >
                           <Eye size={16} />
@@ -251,7 +252,7 @@ function AdminPropertyManagement() {
               <button
                 disabled={page === 1}
                 onClick={() => setPage((p) => p - 1)}
-                className="w-8 h-8 rounded-lg border border-ink/10 flex items-center justify-center hover:bg-mist disabled:opacity-30 transition-colors"
+                className="cursor-pointer w-8 h-8 rounded-lg border border-ink/10 flex items-center justify-center hover:bg-mist disabled:opacity-30 transition-colors"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -261,7 +262,7 @@ function AdminPropertyManagement() {
               <button
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
-                className="w-8 h-8 rounded-lg border border-ink/10 flex items-center justify-center hover:bg-mist disabled:opacity-30 transition-colors"
+                className="cursor-pointer w-8 h-8 rounded-lg border border-ink/10 flex items-center justify-center hover:bg-mist disabled:opacity-30 transition-colors"
               >
                 <ChevronRight size={16} />
               </button>
@@ -291,7 +292,22 @@ function PropertyDetailModal({ propertyId, onClose, onDecided }) {
   const [error, setError] = useState("");
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [showSuspendForm, setShowSuspendForm] = useState(false);
+  const [suspendReason, setSuspendReason] = useState("");
 
+  const suspend = async () => {
+    setActionLoading(true);
+    try {
+      await api.patch(`/admin/properties/${propertyId}/suspend`, {
+        reason: suspendReason,
+      });
+      onDecided();
+    } catch (err) {
+      setError(err.response?.data?.detail || "Couldn't suspend this property.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
   useEffect(() => {
     api
       .get(`/admin/properties/${propertyId}`)
@@ -337,7 +353,7 @@ function PropertyDetailModal({ propertyId, onClose, onDecided }) {
           <h3 className="font-display font-bold text-xl">Property Review</h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-mist hover:bg-ink/10 flex items-center justify-center transition-colors"
+            className="cursor-pointer w-8 h-8 rounded-xl bg-mist hover:bg-ink/10 flex items-center justify-center transition-colors"
           >
             <X size={16} />
           </button>
@@ -520,30 +536,43 @@ function PropertyDetailModal({ propertyId, onClose, onDecided }) {
               </div>
             )}
 
-            {data.status === "pending_review" && (
+            {data.status !== "suspended" && (
               <div className="border-t border-ink/5 pt-5">
-                {!showRejectForm ? (
-                  <div className="flex gap-3">
-                    <button
-                      onClick={approve}
-                      disabled={actionLoading}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors disabled:opacity-50"
-                    >
-                      {actionLoading ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : (
-                        <Check size={16} />
-                      )}{" "}
-                      Approve & Publish
-                    </button>
-                    <button
-                      onClick={() => setShowRejectForm(true)}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-red-200 text-red-600 font-semibold hover:bg-red-50 transition-colors"
-                    >
-                      <X size={16} /> Reject
-                    </button>
+                {!showRejectForm && !showSuspendForm ? (
+                  <div className="flex flex-wrap gap-3">
+                    {(data.status === "pending_review" ||
+                      data.status === "inactive") && (
+                      <button
+                        onClick={approve}
+                        disabled={actionLoading}
+                        className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors disabled:opacity-50"
+                      >
+                        {actionLoading ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Check size={16} />
+                        )}{" "}
+                        Approve
+                      </button>
+                    )}
+                    {data.status === "pending_review" && (
+                      <button
+                        onClick={() => setShowRejectForm(true)}
+                        className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-red-200 text-red-600 font-semibold hover:bg-red-50 transition-colors"
+                      >
+                        <X size={16} /> Reject
+                      </button>
+                    )}
+                    {data.status === "active" && (
+                      <button
+                        onClick={() => setShowSuspendForm(true)}
+                        className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-orange-200 text-orange-600 font-semibold hover:bg-orange-50 transition-colors"
+                      >
+                        <ShieldAlert size={16} /> Suspend
+                      </button>
+                    )}
                   </div>
-                ) : (
+                ) : showRejectForm ? (
                   <div className="space-y-3">
                     <textarea
                       value={rejectReason}
@@ -572,7 +601,55 @@ function PropertyDetailModal({ propertyId, onClose, onDecided }) {
                       </button>
                     </div>
                   </div>
+                ) : (
+                  <div className="space-y-3">
+                    <textarea
+                      value={suspendReason}
+                      onChange={(e) => setSuspendReason(e.target.value)}
+                      rows={3}
+                      placeholder="e.g., Received a complaint about this listing..."
+                      className="w-full rounded-xl border-2 border-ink/10 px-4 py-3 bg-mist/30 focus:bg-white focus:outline-none focus:border-orange-300 text-sm resize-none"
+                    />
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setShowSuspendForm(false)}
+                        disabled={actionLoading}
+                        className="flex-1 px-4 py-3 rounded-xl border-2 border-ink/10 text-ink/60 font-semibold hover:bg-mist transition-colors disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={suspend}
+                        disabled={!suspendReason.trim() || actionLoading}
+                        className="flex-1 px-4 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {actionLoading && (
+                          <Loader2 size={16} className="animate-spin" />
+                        )}{" "}
+                        Confirm Suspension
+                      </button>
+                    </div>
+                  </div>
                 )}
+              </div>
+            )}
+
+            {data.status === "inactive" && data.rejection_reason && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <p className="text-xs font-semibold text-red-700 mb-1">
+                  Rejection reason given
+                </p>
+                <p className="text-sm text-red-700">{data.rejection_reason}</p>
+              </div>
+            )}
+            {data.status === "suspended" && data.suspension_reason && (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
+                <p className="text-xs font-semibold text-orange-700 mb-1">
+                  Suspension reason
+                </p>
+                <p className="text-sm text-orange-700">
+                  {data.suspension_reason}
+                </p>
               </div>
             )}
           </div>

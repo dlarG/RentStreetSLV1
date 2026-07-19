@@ -48,6 +48,7 @@ export default function PropertyFormModal({ property, onClose, onSaved }) {
       .then((res) => setAmenities(res.data))
       .catch(() => {});
   }, []);
+  const [rejectionReason, setRejectionReason] = useState(null);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -66,6 +67,7 @@ export default function PropertyFormModal({ property, onClose, onSaved }) {
           water_supply_rating: d.water_supply_rating ?? "",
           is_sub_metered: d.is_sub_metered,
         });
+        setRejectionReason(d.rejection_reason || null);
         setCoverPreviewUrl(d.cover_image_url || null);
         setPosition([d.latitude, d.longitude]);
         setSelectedAmenities(new Set(d.amenities.map((a) => a.id)));
@@ -174,6 +176,18 @@ export default function PropertyFormModal({ property, onClose, onSaved }) {
               <div className="bg-marigold/10 border border-marigold/30 text-ink/70 text-sm rounded-2xl px-4 py-3">
                 New properties are reviewed by our team before they appear in
                 search results.
+              </div>
+            )}
+
+            {isEdit && rejectionReason && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
+                <p className="text-xs font-semibold text-red-700 mb-1">
+                  Why this needs changes
+                </p>
+                <p className="text-sm text-red-700">{rejectionReason}</p>
+                <p className="text-xs text-red-600/70 mt-2">
+                  Saving any change here will resubmit this property for review.
+                </p>
               </div>
             )}
             <div>
@@ -373,8 +387,8 @@ export default function PropertyFormModal({ property, onClose, onSaved }) {
                           onClick={() => toggleAmenity(a.id)}
                           className={`cursor-pointer px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-colors ${
                             selectedAmenities.has(a.id)
-                              ? "border-ink bg-ink text-ink"
-                              : "border-marigold text-white bg-papaya hover:border-papaya"
+                              ? "border-papaya bg-ink text-papaya"
+                              : "border-ink text-ink bg-white hover:border-papaya"
                           }`}
                         >
                           {a.name}

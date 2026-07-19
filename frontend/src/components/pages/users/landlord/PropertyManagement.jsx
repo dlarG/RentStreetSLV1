@@ -193,8 +193,19 @@ function PropertyManagement() {
               </div>
               {p.status === "pending_review" && (
                 <div className="bg-marigold/10 px-5 py-2.5 text-xs text-ink/60 border-t border-marigold/20">
-                  Add your rooms now — this property (including its rooms) will
-                  be reviewed together before it goes live.
+                  Add your rooms now — this property will be reviewed together
+                  before it goes live.
+                </div>
+              )}
+              {p.status === "inactive" && p.rejection_reason && (
+                <div className="bg-red-50 px-5 py-2.5 text-xs text-red-700 border-t border-red-200">
+                  <span className="font-semibold">Needs changes:</span>{" "}
+                  {p.rejection_reason}
+                </div>
+              )}
+              {p.status === "suspended" && (
+                <div className="bg-red-50 px-5 py-2.5 text-xs text-red-700 border-t border-red-200">
+                  Suspended by our team. Contact support for details.
                 </div>
               )}
             </div>

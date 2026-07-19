@@ -128,6 +128,7 @@ class BoardingHouseDetail(BoardingHouseListItem):
     is_sub_metered: bool
     amenities: list[AmenityItem]
     rooms: list[RoomItem]
+    rejection_reason: str | None = None
     images: list[dict]
 
 
