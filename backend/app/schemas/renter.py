@@ -1,6 +1,43 @@
 from pydantic import BaseModel
 
 
+class RenterProfileDetail(BaseModel):
+    id: str
+    full_name: str
+    email: str
+    phone_number: str | None
+    profile_photo_url: str | None
+    valid_id_url: str | None
+    renter_type: str
+    campus_id: int | None
+    campus_name: str | None
+    academic_major: str | None
+    year_level: int | None
+    occupation: str | None
+    employer_name: str | None
+    stay_duration: str | None
+    budget_min: float | None
+    budget_max: float | None
+    created_at: str
+
+
+class RenterProfileUpdateRequest(BaseModel):
+    full_name: str | None = None
+    phone_number: str | None = None
+    renter_type: str | None = None
+    campus_id: int | None = None
+    academic_major: str | None = None
+    year_level: int | None = None
+    occupation: str | None = None
+    employer_name: str | None = None
+    stay_duration: str | None = None
+    budget_min: float | None = None
+    budget_max: float | None = None
+
+
+class DeactivateAccountRequest(BaseModel):
+    password: str
+
 class ProfileChecklistItem(BaseModel):
     field: str
     label: str
