@@ -138,7 +138,7 @@ function RenterNavbar({ collapsed, onMenuClick }) {
                 <img
                   src={`${API_ORIGIN}${user.profile_photo_url}`}
                   alt=""
-                  className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                  className="w-9 h-9 rounded-full object-cover flex-shrink-0"
                 />
               ) : (
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-bay to-marigold flex items-center justify-center flex-shrink-0">
