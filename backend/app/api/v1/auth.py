@@ -170,4 +170,5 @@ def _to_public(user: User, db: Session) -> dict:
     return {
         "id": str(user.id), "email": user.email, "phone_number": user.phone_number,
         "full_name": user.full_name, "role": user.role, "approval_status": approval_status,
+        "profile_photo_url": user.profile_photo_url,   # <-- add this line
     }

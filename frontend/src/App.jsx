@@ -8,7 +8,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RegisterPage from "./components/layouts/auth/RegisterPage";
 
 // Tenant Component Import
-import TenantDashboard from "./components/pages/users/TenantDashboard";
+import TenantDashboard from "./components/pages/users/renter/TenantDashboard";
+import RenterOverview from "./components/pages/users/renter/RenterOverview";
 
 // Admin Components Import
 import AdminOverview from "./components/pages/admin/AdminOverview";
@@ -68,7 +69,10 @@ function App() {
             <TenantDashboard />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<RenterOverview />} />
+      </Route>
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
