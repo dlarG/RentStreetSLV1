@@ -18,6 +18,9 @@ import {
   X,
   FileText,
   Image as ImageIcon,
+  Briefcase,
+  Plane,
+  MoreHorizontal,
 } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -47,6 +50,7 @@ export default function RegisterPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [renterType, setRenterType] = useState("student");
 
   const isLandlord = role === "landlord";
   const STEPS = isLandlord
@@ -97,6 +101,8 @@ export default function RegisterPage() {
         e.full_name = "Please enter your full name.";
       if (!/^\S+@\S+\.\S+$/.test(form.email))
         e.email = "Enter a valid email address.";
+      if (!isLandlord && !renterType)
+        e.renter_type = "Please select what best describes you.";
     }
     if (targetStep === 3) {
       if (!PH_PHONE_REGEX.test(form.phone_number))
@@ -153,6 +159,7 @@ export default function RegisterPage() {
       data.append("confirm_password", form.confirm_password);
       data.append("role", role);
       data.append("profile_photo", files.profile_photo);
+      if (!isLandlord) data.append("renter_type", renterType);
       data.append("valid_id", files.valid_id); // ✅ now sent for both roles
 
       if (isLandlord) {
@@ -250,6 +257,46 @@ export default function RegisterPage() {
                 error={errors.email}
                 placeholder="you@email.com"
               />
+
+              {!isLandlord && (
+                <div>
+                  <label className="text-sm font-semibold text-ink/70 block mb-2">
+                    Which best describes you?
+                  </label>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <RenterTypeCard
+                      active={renterType === "student"}
+                      onClick={() => setRenterType("student")}
+                      icon={GraduationCap}
+                      label="Student"
+                    />
+                    <RenterTypeCard
+                      active={renterType === "worker"}
+                      onClick={() => setRenterType("worker")}
+                      icon={Briefcase}
+                      label="Working professional"
+                    />
+                    <RenterTypeCard
+                      active={renterType === "tourist"}
+                      onClick={() => setRenterType("tourist")}
+                      icon={Plane}
+                      label="Tourist / short stay"
+                    />
+                    <RenterTypeCard
+                      active={renterType === "other"}
+                      onClick={() => setRenterType("other")}
+                      icon={MoreHorizontal}
+                      label="Other"
+                    />
+                  </div>
+                  {errors.renter_type && (
+                    <p className="text-red-600 text-xs mt-1.5">
+                      {errors.renter_type}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <NavButtons onNext={goNext} onBack={goBack} />
             </fieldset>
           )}
@@ -464,6 +511,22 @@ function RoleCard({ active, onClick, icon: Icon, label, sub }) {
       <Icon size={24} className={active ? "text-bay" : "text-ink/40"} />
       <span className="font-semibold text-sm">{label}</span>
       <span className="text-xs text-ink/50">{sub}</span>
+    </button>
+  );
+}
+function RenterTypeCard({ active, onClick, icon: Icon, label }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`cursor-pointer flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3.5 transition-all text-center ${
+        active
+          ? "border-[#0e5c56] bg-[#0e5c56]/5"
+          : "border-ink/10 hover:border-ink/20"
+      }`}
+    >
+      <Icon size={20} className={active ? "text-bay" : "text-ink/40"} />
+      <span className="font-semibold text-xs">{label}</span>
     </button>
   );
 }
