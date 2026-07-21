@@ -31,7 +31,7 @@ class Favorite(Base):
     __tablename__ = "favorites"
 
     renter_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True)
-    room_id = Column(UUID(as_uuid=True), ForeignKey("rooms.id"), primary_key=True)
+    boarding_house_id = Column(UUID(as_uuid=True), ForeignKey("boarding_houses.id", ondelete="CASCADE"), primary_key=True)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"))
 
 
