@@ -41,6 +41,7 @@ class RegisterRequest(BaseModel):
     password: str
     confirm_password: str
     role: str  # "renter" or "landlord" — never "admin", that's not self-servable
+    renter_type: str | None = None  # only relevant when role == "renter"
 
     @field_validator("full_name")
     @classmethod
@@ -77,6 +78,18 @@ class RegisterRequest(BaseModel):
         if not re.search(r"\d", v):
             raise ValueError("Password must include a number.")
         return v
+
+    @model_validator(mode="after")
+    def passwords_match(self):
+        if self.password != self.confirm_password:
+            raise ValueError("Passwords do not match.")
+        return self
+    
+    @model_validator(mode="after")
+    def check_renter_type(self):
+        if self.role == "renter" and self.renter_type not in ("student", "worker", "tourist", "other"):
+            raise ValueError("Please select what best describes you.")
+        return self
 
     @model_validator(mode="after")
     def passwords_match(self):

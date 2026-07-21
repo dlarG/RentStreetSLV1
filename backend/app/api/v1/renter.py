@@ -25,18 +25,24 @@ def get_profile_completeness(db: Session = Depends(get_db), renter: User = Depen
     profile = db.query(RenterProfile).filter(RenterProfile.user_id == renter.id).first()
 
     checklist = [
-        ProfileChecklistItem(field="campus", label="Campus", done=bool(profile and profile.campus_id)),
-        ProfileChecklistItem(field="academic_major", label="Academic major", done=bool(profile and profile.academic_major)),
-        ProfileChecklistItem(field="year_level", label="Year level", done=bool(profile and profile.year_level)),
+        ProfileChecklistItem(field="renter_type", label="Who you are", done=bool(profile and profile.renter_type)),
         ProfileChecklistItem(field="budget", label="Budget range", done=bool(profile and (profile.budget_min or profile.budget_max))),
     ]
+
+    if profile and profile.renter_type == "student":
+        checklist.append(ProfileChecklistItem(field="campus", label="Campus", done=bool(profile.campus_id)))
+        checklist.append(ProfileChecklistItem(field="academic_major", label="Academic major", done=bool(profile.academic_major)))
+    elif profile and profile.renter_type == "worker":
+        checklist.append(ProfileChecklistItem(field="occupation", label="Occupation", done=bool(profile.occupation)))
+    elif profile and profile.renter_type == "tourist":
+        checklist.append(ProfileChecklistItem(field="stay_duration", label="Expected stay length", done=bool(profile.stay_duration)))
+
     missing = [item for item in checklist if not item.done]
     return ProfileCompleteness(
         is_complete=len(missing) == 0,
         percent=int((len(checklist) - len(missing)) / len(checklist) * 100),
         checklist=checklist,
     )
-
 
 @router.get("/dashboard/stats", response_model=DashboardStats)
 def get_dashboard_stats(db: Session = Depends(get_db), renter: User = Depends(renter_only)):

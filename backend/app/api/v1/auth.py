@@ -85,9 +85,10 @@ async def register(
     password: str = Form(...),
     confirm_password: str = Form(...),
     role: str = Form(...),
+    renter_type: str | None = Form(None),   # <-- add this
     business_name: str | None = Form(None),
     profile_photo: UploadFile = File(...),
-    valid_id: UploadFile = File(...),          # now required for BOTH roles
+    valid_id: UploadFile = File(...),
     business_permit: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
@@ -95,6 +96,7 @@ async def register(
         payload = RegisterRequest(
             full_name=full_name, email=email, phone_number=phone_number,
             password=password, confirm_password=confirm_password, role=role,
+            renter_type=renter_type,   # <-- add this
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
@@ -137,10 +139,7 @@ async def register(
     db.flush()
 
     if is_renter:
-        db.add(RenterProfile(user_id=user.id, valid_id_url=valid_id_url))
-        # Not a "starting grade" — an empty ledger. Score only moves once real
-        # events happen (on-time payments, checkout compliance, disputes, admin
-        # review). 100 here means "no deductions yet," not "verified trustworthy."
+        db.add(RenterProfile(user_id=user.id, valid_id_url=valid_id_url, renter_type=payload.renter_type))
         db.add(TrustScore(renter_id=user.id, score=100.00))
     else:
         business_permit_url = await save_upload(business_permit, "business_permits", ALLOWED_DOCUMENT_TYPES)

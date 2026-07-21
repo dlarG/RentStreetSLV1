@@ -4,7 +4,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from geoalchemy2 import Geography
 from app.core.database import Base
-from app.core.enums import user_role_enum, approval_status_enum
+from app.core.enums import renter_type_enum, user_role_enum, approval_status_enum
 
 
 class User(Base):
@@ -51,11 +51,21 @@ class RenterProfile(Base):
     __tablename__ = "renter_profiles"
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    campus_id = Column(Integer, ForeignKey("campuses.id"))
-    academic_major = Column(String(150))
-    year_level = Column(SmallInteger)
+    renter_type = Column(renter_type_enum, nullable=False, server_default="student")
+
+    # Student-specific — optional now, only relevant when renter_type == 'student'
+    campus_id = Column(Integer, ForeignKey("campuses.id"), nullable=True)
+    academic_major = Column(String(150), nullable=True)
+    year_level = Column(SmallInteger, nullable=True)
+
+    # Worker-specific — new
+    occupation = Column(String(150), nullable=True)
+    employer_name = Column(String(150), nullable=True)
+
+    # Universal — applies to everyone regardless of type
     budget_min = Column(Numeric(10, 2))
     budget_max = Column(Numeric(10, 2))
+    stay_duration = Column(String(30), nullable=True)  # e.g. 'short_term', 'semester', 'long_term' — useful for tourists especially
     study_habits = Column(String(30))
     valid_id_url = Column(String)
     lifestyle_tags = Column(JSONB, server_default=text("'[]'::jsonb"))
@@ -63,7 +73,6 @@ class RenterProfile(Base):
     trust_score_consent_at = Column(TIMESTAMP(timezone=True))
 
     user = relationship("User", back_populates="renter_profile")
-
 
 class LandlordProfile(Base):
     __tablename__ = "landlord_profiles"

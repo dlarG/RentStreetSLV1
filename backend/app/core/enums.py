@@ -24,3 +24,4 @@ payment_method_enum = PGEnum('gcash', 'maya', 'cash', 'bank_transfer', name='pay
 subscription_status_enum = PGEnum('trialing', 'active', 'past_due', 'canceled', name='subscription_status', create_type=False)
 interaction_type_enum = PGEnum('view', 'favorite', 'apply', 'contact', name='interaction_type', create_type=False)
 approval_status_enum = PGEnum('pending', 'accepted', 'rejected', name='approval_status', create_type=False)
+renter_type_enum = PGEnum('student', 'worker', 'tourist', 'other', name='renter_type', create_type=False)
