@@ -72,3 +72,61 @@ class ActivityItem(BaseModel):
     type: str  # "application" | "payment" | "move_in"
     description: str
     time: str
+
+class AmenityMini(BaseModel):
+    id: int
+    name: str
+    icon_key: str | None
+
+
+class PropertySearchItem(BaseModel):
+    id: str
+    name: str
+    cover_image_url: str | None
+    barangay: str | None
+    municipality: str
+    price_label: str
+    min_price: float
+    max_price: float
+    avg_rating: float | None
+    review_count: int
+    available_rooms_count: int
+    amenities: list[AmenityMini]
+    is_favorited: bool
+    latitude: float
+    longitude: float
+
+
+class PropertySearchResponse(BaseModel):
+    items: list[PropertySearchItem]
+    total: int
+    page: int
+    page_size: int
+
+
+class PublicRoomItem(BaseModel):
+    id: str
+    room_label: str
+    room_type: str
+    capacity: int
+    base_price_monthly: float
+    has_own_bathroom: bool
+    has_aircon: bool
+    status: str
+    images: list[dict]
+
+
+class PropertyPublicDetail(PropertySearchItem):
+    description: str | None
+    curfew_time: str | None
+    allows_cooking: bool
+    gender_policy: str
+    water_supply_rating: int | None
+    is_sub_metered: bool
+    rooms: list[PublicRoomItem]
+    all_amenities: list[AmenityMini]
+
+
+class ApplyRequest(BaseModel):
+    room_id: str
+    message: str | None = None

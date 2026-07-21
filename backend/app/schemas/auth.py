@@ -78,12 +78,6 @@ class RegisterRequest(BaseModel):
         if not re.search(r"\d", v):
             raise ValueError("Password must include a number.")
         return v
-
-    @model_validator(mode="after")
-    def passwords_match(self):
-        if self.password != self.confirm_password:
-            raise ValueError("Passwords do not match.")
-        return self
     
     @model_validator(mode="after")
     def check_renter_type(self):

@@ -10,6 +10,7 @@ import RegisterPage from "./components/layouts/auth/RegisterPage";
 // Tenant Component Import
 import TenantDashboard from "./components/pages/users/renter/TenantDashboard";
 import RenterOverview from "./components/pages/users/renter/RenterOverview";
+import RenterSearch from "./components/pages/users/renter/RenterSearch";
 
 // Admin Components Import
 import AdminOverview from "./components/pages/admin/AdminOverview";
@@ -73,6 +74,7 @@ function App() {
       >
         <Route index element={<RenterOverview />} />
         <Route path="/renter/settings/" element={<RenterSettings />} />
+        <Route path="/renter/search" element={<RenterSearch />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
