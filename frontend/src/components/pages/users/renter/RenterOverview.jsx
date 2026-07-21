@@ -62,7 +62,7 @@ function RenterOverview() {
       label: "Find Rooms",
       icon: Search,
       path: "/renter/search",
-      color: "bg-bay text-white",
+      color: "bg-papaya text-white",
     },
     {
       label: "My Favorites",
@@ -99,16 +99,16 @@ function RenterOverview() {
           </div>
           <Link
             to="/renter/search"
-            className="inline-flex items-center gap-2 px-5 py-3 bg-marigold text-ink font-semibold rounded-xl hover:bg-white transition-colors text-sm"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-papaya text-ink font-semibold rounded-xl hover:bg-white transition-colors text-sm"
           >
             <Search size={16} /> Browse Rooms
           </Link>
         </div>
       </div>
       {profileStatus && !profileStatus.is_complete && (
-        <div className="bg-marigold/10 border-2 border-marigold/30 rounded-2xl p-5 sm:p-6">
+        <div className="bg-marigold/10 border-2 border-papaya/30 rounded-2xl p-5 sm:p-6">
           <div className="flex items-start gap-4">
-            <div className="w-11 h-11 rounded-xl bg-marigold flex items-center justify-center flex-shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-papaya flex items-center justify-center flex-shrink-0">
               <ClipboardCheck size={20} className="text-ink" />
             </div>
             <div className="flex-1 min-w-0">
@@ -116,7 +116,7 @@ function RenterOverview() {
                 <h3 className="font-display font-bold text-base sm:text-lg">
                   Complete your profile
                 </h3>
-                <span className="text-xs font-bold text-marigold flex-shrink-0">
+                <span className="text-xs font-bold text-papaya flex-shrink-0">
                   {profileStatus.percent}%
                 </span>
               </div>

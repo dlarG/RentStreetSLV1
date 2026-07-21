@@ -85,13 +85,13 @@ function RenterSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
       <div className="h-16 flex items-center gap-3 px-4 border-b border-ink/5 flex-shrink-0">
         <button
           onClick={onMobileClose}
-          className="lg:hidden w-8 h-8 rounded-lg bg-mist flex items-center justify-center hover:bg-bay/10 transition-colors flex-shrink-0"
+          className="lg:hidden w-8 h-8 rounded-lg bg-mist flex items-center justify-center hover:bg-papaya/10 transition-colors flex-shrink-0"
         >
           <X size={16} className="text-ink/60" />
         </button>
         <button
           onClick={onToggle}
-          className="hidden lg:flex w-8 h-8 rounded-lg bg-mist items-center justify-center hover:bg-bay/10 transition-colors flex-shrink-0"
+          className="hidden lg:flex w-8 h-8 rounded-lg bg-mist items-center justify-center hover:bg-papaya/10 transition-colors flex-shrink-0"
         >
           {collapsed ? (
             <ChevronRight size={16} className="text-ink/60" />
@@ -105,7 +105,7 @@ function RenterSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
             className="flex items-center gap-2"
             onClick={onMobileClose}
           >
-            <div className="w-8 h-8 rounded-full bg-bay flex items-center justify-center overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-papaya flex items-center justify-center overflow-hidden">
               <img
                 src="/asset/logo/5-circled-modified.png"
                 alt=""
@@ -138,8 +138,8 @@ function RenterSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
                     onClick={onMobileClose}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${
                       isActive
-                        ? "bg-bay text-white shadow-lg shadow-bay/20"
-                        : "text-ink/60 hover:bg-mist hover:text-ink"
+                        ? "bg-papaya text-white shadow-lg shadow-papaya/20"
+                        : "text-ink/60 hover:bg-[#faf8f2] hover:text-ink"
                     }`}
                     title={collapsed ? item.label : undefined}
                   >
