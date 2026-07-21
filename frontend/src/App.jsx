@@ -23,6 +23,7 @@ import AdminPropertyManagement from "./components/pages/admin/AdminPropertyManag
 import LandLordDashboard from "./components/pages/users/landlord/LandLordDashboard";
 import LandLordOverview from "./components/pages/users/landlord/LandLordOverview";
 import PropertyManagement from "./components/pages/users/landlord/PropertyManagement";
+import RenterSettings from "./components/pages/users/renter/RenterSettings";
 // import MyTenants from "./components/pages/users/MyTenant";
 
 function App() {
@@ -71,6 +72,7 @@ function App() {
         }
       >
         <Route index element={<RenterOverview />} />
+        <Route path="/renter/settings/" element={<RenterSettings />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

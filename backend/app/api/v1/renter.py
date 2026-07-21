@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, cast
 from geoalchemy2 import Geometry
@@ -11,13 +11,128 @@ from app.models.trust import TrustScore
 from app.models.bookings import RentalApplication, Tenancy
 from app.models.properties import BoardingHouse, Room, PropertyImage
 from app.models.ml import Favorite
+from fastapi import UploadFile, File
+from app.core.security import verify_password
+from app.core.files import save_upload, ALLOWED_IMAGE_TYPES
+from app.models.users import Campus
 from app.schemas.renter import (
     ProfileCompleteness, ProfileChecklistItem, DashboardStats,
-    NearbyProperty, ActivityItem,
+    NearbyProperty, ActivityItem, RenterProfileDetail, RenterProfileUpdateRequest, DeactivateAccountRequest,
 )
 
 router = APIRouter(prefix="/renter", tags=["renter"])
 renter_only = require_roles("renter")
+
+
+def _profile_to_detail(user: User, profile: RenterProfile, db: Session) -> RenterProfileDetail:
+    campus_name = None
+    if profile and profile.campus_id:
+        campus = db.query(Campus).filter(Campus.id == profile.campus_id).first()
+        campus_name = campus.name if campus else None
+
+    return RenterProfileDetail(
+        id=str(user.id), full_name=user.full_name, email=user.email,
+        phone_number=user.phone_number, profile_photo_url=user.profile_photo_url,
+        valid_id_url=profile.valid_id_url if profile else None,
+        renter_type=profile.renter_type if profile else "student",
+        campus_id=profile.campus_id if profile else None, campus_name=campus_name,
+        academic_major=profile.academic_major if profile else None,
+        year_level=profile.year_level if profile else None,
+        occupation=profile.occupation if profile else None,
+        employer_name=profile.employer_name if profile else None,
+        stay_duration=profile.stay_duration if profile else None,
+        budget_min=float(profile.budget_min) if profile and profile.budget_min else None,
+        budget_max=float(profile.budget_max) if profile and profile.budget_max else None,
+        created_at=str(user.created_at),
+    )
+
+
+@router.get("/profile", response_model=RenterProfileDetail)
+def get_profile(db: Session = Depends(get_db), renter: User = Depends(renter_only)):
+    profile = db.query(RenterProfile).filter(RenterProfile.user_id == renter.id).first()
+    return _profile_to_detail(renter, profile, db)
+
+@router.patch("/profile", response_model=RenterProfileDetail)
+def update_profile(
+    payload: RenterProfileUpdateRequest,
+    db: Session = Depends(get_db), renter: User = Depends(renter_only),
+):
+    if payload.full_name is not None:
+        if len(payload.full_name.strip()) < 2:
+            raise HTTPException(status_code=422, detail="Please enter your full name.")
+        renter.full_name = payload.full_name.strip()
+
+    if payload.phone_number is not None:
+        conflict = db.query(User).filter(User.phone_number == payload.phone_number, User.id != renter.id).first()
+        if conflict:
+            raise HTTPException(status_code=409, detail="Another account already uses this phone number.")
+        renter.phone_number = payload.phone_number
+
+    profile = db.query(RenterProfile).filter(RenterProfile.user_id == renter.id).first()
+    if profile is None:
+        profile = RenterProfile(user_id=renter.id)
+        db.add(profile)
+
+    if payload.renter_type is not None:
+        if payload.renter_type not in ("student", "worker", "tourist", "other"):
+            raise HTTPException(status_code=422, detail="Invalid renter type.")
+        profile.renter_type = payload.renter_type
+
+    # Only persist type-specific fields relevant to the (possibly just-updated) type —
+    # keeps stale data from a previous type from lingering (e.g. an old academic_major
+    # sitting around after switching from student to tourist).
+    effective_type = payload.renter_type or profile.renter_type
+
+    if effective_type == "student":
+        if payload.campus_id is not None:
+            profile.campus_id = payload.campus_id
+        if payload.academic_major is not None:
+            profile.academic_major = payload.academic_major
+        if payload.year_level is not None:
+            profile.year_level = payload.year_level
+    elif effective_type == "worker":
+        if payload.occupation is not None:
+            profile.occupation = payload.occupation
+        if payload.employer_name is not None:
+            profile.employer_name = payload.employer_name
+    elif effective_type == "tourist":
+        if payload.stay_duration is not None:
+            profile.stay_duration = payload.stay_duration
+
+    if payload.budget_min is not None:
+        profile.budget_min = payload.budget_min
+    if payload.budget_max is not None:
+        profile.budget_max = payload.budget_max
+
+    db.commit()
+    db.refresh(renter)
+    db.refresh(profile)
+    return _profile_to_detail(renter, profile, db)
+
+
+@router.post("/profile/photo", response_model=RenterProfileDetail)
+async def update_profile_photo(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db), renter: User = Depends(renter_only),
+):
+    url = await save_upload(file, "profile_photos", ALLOWED_IMAGE_TYPES)
+    renter.profile_photo_url = url
+    db.commit()
+    profile = db.query(RenterProfile).filter(RenterProfile.user_id == renter.id).first()
+    return _profile_to_detail(renter, profile, db)
+
+
+@router.post("/account/deactivate")
+def deactivate_own_account(
+    payload: DeactivateAccountRequest,
+    db: Session = Depends(get_db), renter: User = Depends(renter_only),
+):
+    if not verify_password(payload.password, renter.password_hash):
+        raise HTTPException(status_code=401, detail="Incorrect password.")
+
+    renter.is_active = False
+    db.commit()
+    return {"message": "Your account has been deactivated."}
 
 
 @router.get("/profile/completeness", response_model=ProfileCompleteness)
