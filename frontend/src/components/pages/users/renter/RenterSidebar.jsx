@@ -58,20 +58,23 @@ function RenterSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
 
   useEffect(() => {
     let cancelled = false;
-    const fetchCounts = async () => {
-      try {
-        const [appRes, notifRes] = await Promise.all([
-          api.get("/renter/applications/pending-count"),
-          api.get("/renter/notifications/unread-count"),
-        ]);
-        if (!cancelled) {
-          setPendingApplications(appRes.data.count);
-          setUnreadNotifications(notifRes.data.count);
-        }
-      } catch {
-        // Silent fail
-      }
+
+    const fetchCounts = () => {
+      api
+        .get("/renter/applications/pending-count")
+        .then((res) => {
+          if (!cancelled) setPendingApplications(res.data.count);
+        })
+        .catch(() => {});
+
+      api
+        .get("/renter/notifications/unread-count")
+        .then((res) => {
+          if (!cancelled) setUnreadNotifications(res.data.count);
+        })
+        .catch(() => {});
     };
+
     fetchCounts();
     const interval = setInterval(fetchCounts, 30000);
     return () => {

@@ -277,6 +277,9 @@ function RenterSearch() {
           propertyId={selectedId}
           onClose={() => setSelectedId(null)}
           onFavoriteChange={fetchProperties}
+          onApplied={(propertyId) => {
+            setProperties((prev) => prev.filter((p) => p.id !== propertyId));
+          }}
         />
       )}
     </div>
@@ -426,7 +429,12 @@ function PropertyListRow({ property: p, onClick, onToggleFavorite }) {
   );
 }
 
-function PropertyDetailModal({ propertyId, onClose, onFavoriteChange }) {
+function PropertyDetailModal({
+  propertyId,
+  onClose,
+  onFavoriteChange,
+  onApplied,
+}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -466,6 +474,7 @@ function PropertyDetailModal({ propertyId, onClose, onFavoriteChange }) {
         message: applyMessage || null,
       });
       setApplySuccess(true);
+      onApplied(propertyId); // <-- instantly drop this card from the grid behind the modal
     } catch (err) {
       setError(
         err.response?.data?.detail || "Couldn't submit your application."
@@ -623,51 +632,51 @@ function PropertyDetailModal({ propertyId, onClose, onFavoriteChange }) {
               </p>
               <div className="space-y-2.5">
                 {data.rooms
-                  .filter((r) => r.status === "available")
-                  .map((r) => (
-                    <button
-                      key={r.id}
-                      onClick={() => setSelectedRoomId(r.id)}
-                      className={`cursor-pointer w-full text-left p-4 rounded-xl border-2 transition-all ${
-                        selectedRoomId === r.id
-                          ? "border-papaya bg-papaya/5"
-                          : "border-ink/10 hover:border-ink/20"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-semibold">
-                          {r.room_label}
-                        </span>
-                        <span className="text-sm font-bold text-papaya">
-                          ₱{r.base_price_monthly.toLocaleString()}/mo
-                        </span>
-                      </div>
-                      <p className="text-xs text-ink/50">
-                        {r.room_type === "private" ? "Private" : "Shared"} ·
-                        Capacity {r.capacity}
-                        {r.has_own_bathroom && " · Own CR"}
-                        {r.has_aircon && " · Aircon"}
-                      </p>
-                      {r.images.length > 0 && (
-                        <div className="flex gap-1.5 mt-2 overflow-x-auto">
-                          {r.images.slice(0, 4).map((img) => (
-                            <img
-                              key={img.id}
-                              src={fileUrl(img.url)}
-                              alt=""
-                              className="w-40 h-40 rounded-lg object-cover flex-shrink-0"
-                            />
-                          ))}
+                  .filter(
+                    (r) =>
+                      r.status === "available" ||
+                      data.room_application_status[r.id]
+                  )
+                  .map((r) => {
+                    const appliedStatus = data.room_application_status[r.id];
+                    const isApplied = Boolean(appliedStatus);
+                    return (
+                      <button
+                        key={r.id}
+                        onClick={() => !isApplied && setSelectedRoomId(r.id)}
+                        disabled={isApplied}
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                          isApplied
+                            ? "border-ink/10 bg-mist/50 cursor-not-allowed opacity-70"
+                            : selectedRoomId === r.id
+                            ? "border-bay bg-bay/5"
+                            : "border-ink/10 hover:border-ink/20"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-semibold flex items-center gap-2">
+                            {r.room_label}
+                            {isApplied && (
+                              <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-marigold/20 text-marigold">
+                                {appliedStatus === "accepted"
+                                  ? "Renting"
+                                  : "Applied"}
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-sm font-bold text-bay">
+                            ₱{r.base_price_monthly.toLocaleString()}/mo
+                          </span>
                         </div>
-                      )}
-                    </button>
-                  ))}
-                {data.rooms.filter((r) => r.status === "available").length ===
-                  0 && (
-                  <p className="text-sm text-ink/40">
-                    No rooms currently available at this property.
-                  </p>
-                )}
+                        <p className="text-xs text-ink/50">
+                          {r.room_type === "private" ? "Private" : "Shared"} ·
+                          Capacity {r.capacity}
+                          {r.has_own_bathroom && " · Own CR"}
+                          {r.has_aircon && " · Aircon"}
+                        </p>
+                      </button>
+                    );
+                  })}
               </div>
             </div>
 
@@ -701,8 +710,12 @@ function PropertyDetailModal({ propertyId, onClose, onFavoriteChange }) {
               </button>
               <button
                 onClick={submitApplication}
-                disabled={!selectedRoomId || applying}
-                className="cursor-pointer flex-1 btn-primary rounded-xl py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+                disabled={
+                  !selectedRoomId ||
+                  applying ||
+                  Boolean(data.room_application_status[selectedRoomId])
+                }
+                className="flex-1 btn-primary rounded-xl py-3 flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {applying ? (
                   <Loader2 size={16} className="animate-spin" />
