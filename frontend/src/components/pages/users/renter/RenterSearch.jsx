@@ -18,6 +18,27 @@ import {
   Shield,
   Zap,
   Home,
+  SlidersHorizontal,
+  RotateCcw,
+  Wind,
+  Camera,
+  Lock,
+  CookingPot,
+  WashingMachine,
+  GraduationCap,
+  Briefcase,
+  Moon,
+  Car,
+  PawPrint,
+  ShowerHead,
+  Fan,
+  Table,
+  Lightbulb,
+  Sofa,
+  ShoppingBag,
+  Bus,
+  Hospital,
+  HeartIcon,
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import api from "../../../../lib/api";
@@ -28,13 +49,40 @@ const API_ORIGIN = (
 ).replace("/api/v1", "");
 const fileUrl = (path) => (path ? `${API_ORIGIN}${path}` : null);
 
-const AMENITY_ICONS = {
+const AMENITY_ICON_MAP = {
   wifi: Wifi,
-  droplet: Droplet,
-  shield: Shield,
+  tv: Home, // Cable TV - no specific icon
   zap: Zap,
+  droplet: Droplet,
+  droplets: Droplet,
+  "shower-head": ShowerHead,
+  bath: Home,
+  wind: Wind,
+  fan: Fan,
+  table: Table,
+  cabinet: Home,
+  camera: Camera,
+  shield: Shield,
+  lock: Lock,
+  flame: Home,
+  lightbulb: Lightbulb,
+  "cooking-pot": CookingPot,
+  utensils: Home,
+  "washing-machine": WashingMachine,
+  sofa: Sofa,
+  car: Car,
+  "paw-print": PawPrint,
+  moon: Moon,
+  footprints: Home,
+  bus: Bus,
+  "shopping-bag": ShoppingBag,
+  hospital: Hospital,
+  heart: HeartIcon, // Open for couples
+  "graduation-cap": GraduationCap,
+  briefcase: Briefcase,
 };
-const iconFor = (key) => AMENITY_ICONS[key] || Home;
+
+const iconFor = (key) => AMENITY_ICON_MAP[key] || Home;
 
 const SORT_OPTIONS = [
   { value: "rating", label: "Highest rated" },
@@ -44,7 +92,7 @@ const SORT_OPTIONS = [
 ];
 
 function RenterSearch() {
-  const [view, setView] = useState("grid"); // grid | list
+  const [view, setView] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState("rating");
   const [properties, setProperties] = useState([]);
@@ -53,34 +101,100 @@ function RenterSearch() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [selectedId, setSelectedId] = useState(null);
+
+  // Filter states
+  const [showFilters, setShowFilters] = useState(false);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [selectedAmenities, setSelectedAmenities] = useState([]);
+  const [amenityOptions, setAmenityOptions] = useState([]); // Fetched from DB
+
   const pageSize = 12;
 
   useEffect(() => {
     document.title = "RentStreet | Find Rooms";
+    fetchAmenities();
   }, []);
+
+  // Fetch amenities from the database
+  const fetchAmenities = async () => {
+    try {
+      const res = await api.get("/renter/amenities");
+      setAmenityOptions(res.data);
+    } catch {
+      // Silent fail - filter panel will just be empty
+    }
+  };
 
   const fetchProperties = useCallback(() => {
     setLoading(true);
     setErrorMsg("");
+    const params = {
+      search: searchQuery,
+      sort,
+      page,
+      page_size: pageSize,
+    };
+    if (minPrice) params.min_price = Number(minPrice);
+    if (maxPrice) params.max_price = Number(maxPrice);
+    if (selectedAmenities.length > 0) {
+      // Pass as repeated query param: amenity_ids=1&amenity_ids=3
+      params["amenity_ids"] = selectedAmenities;
+    }
+
     api
-      .get("/renter/properties/search", {
-        params: { search: searchQuery, sort, page, page_size: pageSize },
-      })
+      .get("/renter/properties/search", { params })
       .then((res) => {
         setProperties(res.data.items);
         setTotal(res.data.total);
       })
       .catch(() => setErrorMsg("Couldn't load properties."))
       .finally(() => setLoading(false));
-  }, [searchQuery, sort, page]);
+  }, [searchQuery, sort, page, minPrice, maxPrice, selectedAmenities]);
 
   useEffect(() => {
     fetchProperties();
   }, [fetchProperties]);
+
   useEffect(() => {
     const t = setTimeout(() => setPage(1), 300);
     return () => clearTimeout(t);
   }, [searchQuery]);
+
+  const toggleAmenity = (amenityId) => {
+    setSelectedAmenities((prev) =>
+      prev.includes(amenityId)
+        ? prev.filter((id) => id !== amenityId)
+        : [...prev, amenityId]
+    );
+  };
+
+  const clearFilters = () => {
+    setMinPrice("");
+    setMaxPrice("");
+    setSelectedAmenities([]);
+    setSearchQuery("");
+    setSort("rating");
+    setPage(1);
+  };
+
+  const hasActiveFilters = minPrice || maxPrice || selectedAmenities.length > 0;
+
+  // Group amenities by category for organized display
+  const groupedAmenities = amenityOptions.reduce((acc, amenity) => {
+    const category = amenity.category || "other";
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(amenity);
+    return acc;
+  }, {});
+
+  const categoryLabels = {
+    connectivity: "Connectivity",
+    utility: "Utilities",
+    safety: "Safety & Security",
+    lifestyle: "Lifestyle",
+    other: "Other",
+  };
 
   const toggleFavorite = async (property, e) => {
     e.stopPropagation();
@@ -106,109 +220,183 @@ function RenterSearch() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display font-extrabold text-2xl sm:text-3xl">
-          Find a room
-        </h1>
-        <p className="text-sm text-ink/60 mt-1">
-          Browse verified boarding houses in Sogod.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display font-extrabold text-2xl sm:text-3xl">
+            Find a room
+          </h1>
+          <p className="text-sm text-ink/60 mt-1">
+            Browse verified boarding houses in Sogod.
+          </p>
+        </div>
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            showFilters || hasActiveFilters
+              ? "bg-papaya text-white"
+              : "border-2 border-ink/10 text-ink/60 hover:bg-mist"
+          }`}
+        >
+          <SlidersHorizontal size={16} />
+          Filters
+          {hasActiveFilters && (
+            <span className="w-5 h-5 rounded-full bg-white text-papaya text-xs font-bold flex items-center justify-center">
+              {selectedAmenities.length + (minPrice || maxPrice ? 1 : 0)}
+            </span>
+          )}
+        </button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        {/* Search - full width on mobile */}
-        <div className="relative flex-1">
-          <Search
-            size={18}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40"
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name or barangay..."
-            className="w-full rounded-xl border border-ink/10 pl-10 pr-4 py-3 bg-white focus:outline-none focus:border-papaya transition-all text-sm"
-          />
-        </div>
+      {showFilters && (
+        <div className="bg-white rounded-2xl border border-ink/5 p-5 sm:p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display font-bold text-lg">Filters</h3>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-1.5 text-xs font-semibold text-papaya hover:text-marigold transition-colors"
+              >
+                <RotateCcw size={13} /> Clear all
+              </button>
+            )}
+          </div>
 
-        {/* Sort + View Toggle - side by side on mobile */}
-        <div className="flex gap-2 sm:hidden">
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="flex-1 rounded-xl border border-ink/10 px-3 py-3 bg-white focus:outline-none focus:border-papaya transition-all text-sm"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <div className="flex rounded-xl border border-ink/10 overflow-hidden flex-shrink-0">
+          {/* Price Range */}
+          <div>
+            <p className="text-sm font-semibold text-ink/70 mb-3">
+              Monthly rent range (₱)
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-ink/40 mb-1 block">
+                  Minimum
+                </label>
+                <input
+                  type="number"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  placeholder="1,500"
+                  className="w-full rounded-xl border-2 border-ink/10 px-3 py-2.5 bg-white focus:outline-none focus:border-papaya text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-ink/40 mb-1 block">
+                  Maximum
+                </label>
+                <input
+                  type="number"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  placeholder="5,000"
+                  className="w-full rounded-xl border-2 border-ink/10 px-3 py-2.5 bg-white focus:outline-none focus:border-papaya text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Amenities - Grouped by Category */}
+          {Object.keys(groupedAmenities).length > 0 ? (
+            Object.entries(groupedAmenities).map(([category, amenities]) => (
+              <div key={category}>
+                <p className="text-sm font-semibold text-ink/70 mb-3">
+                  {categoryLabels[category] || category}
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {amenities.map((amenity) => {
+                    const Icon = iconFor(amenity.icon_key);
+                    const isSelected = selectedAmenities.includes(amenity.id);
+                    return (
+                      <button
+                        key={amenity.id}
+                        onClick={() => toggleAmenity(amenity.id)}
+                        className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+                          isSelected
+                            ? "border-papaya bg-papaya/5 text-papaya"
+                            : "border-ink/10 text-ink/60 hover:border-ink/20"
+                        }`}
+                      >
+                        <Icon size={15} />
+                        <span className="truncate">{amenity.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="py-8 text-center">
+              <Loader2
+                className="animate-spin text-ink/20 mx-auto mb-2"
+                size={20}
+              />
+              <p className="text-xs text-ink/40">Loading amenities...</p>
+            </div>
+          )}
+
+          {/* Apply Button */}
+          <div className="flex gap-3 pt-2 border-t border-ink/5">
             <button
-              onClick={() => setView("grid")}
-              className={`cursor-pointer px-3.5 py-3 flex items-center justify-center transition-colors ${
-                view === "grid"
-                  ? "bg-papaya text-white"
-                  : "bg-white text-ink/40 hover:bg-mist"
-              }`}
+              onClick={() => setShowFilters(false)}
+              className="flex-1 px-4 py-2.5 rounded-xl border-2 border-ink/10 text-ink/60 font-semibold hover:bg-mist transition-colors text-sm"
             >
-              <LayoutGrid size={18} />
+              Close
             </button>
             <button
-              onClick={() => setView("list")}
-              className={`cursor-pointer px-3.5 py-3 flex items-center justify-center transition-colors ${
-                view === "list"
-                  ? "bg-papaya text-white"
-                  : "bg-white text-ink/40 hover:bg-mist"
-              }`}
+              onClick={() => {
+                setPage(1);
+                setShowFilters(false);
+              }}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-papaya text-white font-semibold hover:bg-marigold transition-colors text-sm"
             >
-              <List size={18} />
+              Apply Filters
             </button>
           </div>
         </div>
-
-        {/* Sort + View Toggle - original layout on desktop */}
-        <div className="hidden sm:flex gap-3">
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="rounded-xl border border-ink/10 px-3 py-3 bg-white focus:outline-none focus:border-papaya transition-all text-sm"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <div className="flex rounded-xl border border-ink/10 overflow-hidden flex-shrink-0">
-            <button
-              onClick={() => setView("grid")}
-              className={`cursor-pointer px-3.5 py-3 flex items-center justify-center transition-colors ${
-                view === "grid"
-                  ? "bg-papaya text-white"
-                  : "bg-white text-ink/40 hover:bg-mist"
-              }`}
-            >
-              <LayoutGrid size={18} />
-            </button>
-            <button
-              onClick={() => setView("list")}
-              className={`cursor-pointer px-3.5 py-3 flex items-center justify-center transition-colors ${
-                view === "list"
-                  ? "bg-papaya text-white"
-                  : "bg-white text-ink/40 hover:bg-mist"
-              }`}
-            >
-              <List size={18} />
-            </button>
-          </div>
-        </div>
-      </div>
+      )}
 
       {errorMsg && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
           {errorMsg}
+        </div>
+      )}
+      {hasActiveFilters && !showFilters && (
+        <div className="flex flex-wrap items-center gap-2">
+          {minPrice && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-papaya/10 text-papaya px-3 py-1.5 rounded-full">
+              Min ₱{Number(minPrice).toLocaleString()}
+              <button onClick={() => setMinPrice("")}>
+                <X size={12} />
+              </button>
+            </span>
+          )}
+          {maxPrice && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-papaya/10 text-papaya px-3 py-1.5 rounded-full">
+              Max ₱{Number(maxPrice).toLocaleString()}
+              <button onClick={() => setMaxPrice("")}>
+                <X size={12} />
+              </button>
+            </span>
+          )}
+          {selectedAmenities.map((id) => {
+            const amenity = amenityOptions.find((a) => a.id === id);
+            return amenity ? (
+              <span
+                key={id}
+                className="inline-flex items-center gap-1.5 text-xs font-medium bg-papaya/10 text-papaya px-3 py-1.5 rounded-full"
+              >
+                {amenity.name}
+                <button onClick={() => toggleAmenity(id)}>
+                  <X size={12} />
+                </button>
+              </span>
+            ) : null;
+          })}
+          <button
+            onClick={clearFilters}
+            className="text-xs font-semibold text-ink/40 hover:text-papaya transition-colors ml-1"
+          >
+            Clear all
+          </button>
         </div>
       )}
 
