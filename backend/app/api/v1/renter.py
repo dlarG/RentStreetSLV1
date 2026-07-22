@@ -52,6 +52,120 @@ def _profile_to_detail(user: User, profile: RenterProfile, db: Session) -> Rente
         created_at=str(user.created_at),
     )
 
+@router.get("/favorites", response_model=PropertySearchResponse)
+def list_favorites(
+    search: str = Query(""),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(12, ge=1, le=50),
+    db: Session = Depends(get_db),
+    renter: User = Depends(renter_only),
+):
+    geom = cast(BoardingHouse.location, Geometry)
+
+    room_agg = (
+        db.query(
+            Room.boarding_house_id.label("bh_id"),
+            func.min(Room.base_price_monthly).label("min_price"),
+            func.max(Room.base_price_monthly).label("max_price"),
+            func.count(Room.id).label("available_rooms"),
+        )
+        .filter(Room.status == "available")
+        .group_by(Room.boarding_house_id)
+        .subquery()
+    )
+    review_agg = (
+        db.query(
+            Review.boarding_house_id.label("bh_id"),
+            func.avg(Review.rating).label("avg_rating"),
+            func.count(Review.id).label("review_count"),
+        )
+        .group_by(Review.boarding_house_id)
+        .subquery()
+    )
+
+    query = (
+        db.query(
+            BoardingHouse, room_agg.c.min_price, room_agg.c.max_price, room_agg.c.available_rooms,
+            review_agg.c.avg_rating, review_agg.c.review_count,
+        )
+        .join(Favorite, Favorite.boarding_house_id == BoardingHouse.id)
+        .outerjoin(room_agg, room_agg.c.bh_id == BoardingHouse.id)
+        .outerjoin(review_agg, review_agg.c.bh_id == BoardingHouse.id)
+        .filter(Favorite.renter_id == renter.id)
+    )
+
+    if search:
+        like = f"%{search}%"
+        query = query.filter(or_(BoardingHouse.name.ilike(like), BoardingHouse.barangay.ilike(like)))
+
+    total = query.count()
+    rows = query.order_by(Favorite.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+
+    items = []
+    for bh, min_price_v, max_price_v, avail, avg_rating, review_count in rows:
+        # A favorited property can go inactive/have no rooms left — guard against nulls
+        # rather than crashing the whole list over one stale favorite.
+        min_price_v = float(min_price_v) if min_price_v is not None else 0.0
+        max_price_v = float(max_price_v) if max_price_v is not None else 0.0
+        avail = avail or 0
+
+        amenities = (
+            db.query(Amenity)
+            .join(BoardingHouseAmenity, BoardingHouseAmenity.amenity_id == Amenity.id)
+            .filter(BoardingHouseAmenity.boarding_house_id == bh.id)
+            .limit(5)
+            .all()
+        )
+        price_label = (
+            f"\u20b1{int(min_price_v):,}" if min_price_v == max_price_v
+            else f"\u20b1{int(min_price_v):,} - \u20b1{int(max_price_v):,}"
+        )
+        lat, lng = db.query(func.ST_Y(geom), func.ST_X(geom)).filter(BoardingHouse.id == bh.id).first()
+        items.append(PropertySearchItem(
+            id=str(bh.id), name=bh.name, cover_image_url=_cover_image(db, bh.id),
+            barangay=bh.barangay, municipality=bh.municipality,
+            price_label=price_label, min_price=min_price_v, max_price=max_price_v,
+            avg_rating=round(float(avg_rating), 1) if avg_rating else None, review_count=review_count or 0,
+            available_rooms_count=avail,
+            amenities=[AmenityMini(id=a.id, name=a.name, icon_key=a.icon_key) for a in amenities],
+            is_favorited=True, latitude=lat, longitude=lng,
+        ))
+
+    return PropertySearchResponse(items=items, total=total, page=page, page_size=page_size)
+
+@router.get("/applications/pending-count")
+def applications_pending_count(db: Session = Depends(get_db), renter: User = Depends(renter_only)):
+    count = db.query(func.count(RentalApplication.id)).filter(
+        RentalApplication.renter_id == renter.id,
+        RentalApplication.status.in_(("submitted", "viewed")),
+    ).scalar()
+    return {"count": count}
+
+
+@router.patch("/applications/{application_id}/withdraw")
+def withdraw_application(
+    application_id: str, db: Session = Depends(get_db), renter: User = Depends(renter_only),
+):
+    app = db.query(RentalApplication).filter(
+        RentalApplication.id == application_id, RentalApplication.renter_id == renter.id,
+    ).first()
+    if app is None:
+        raise HTTPException(status_code=404, detail="Application not found.")
+    if app.status not in ("submitted", "viewed"):
+        raise HTTPException(status_code=409, detail="Only pending applications can be withdrawn.")
+
+    app.status = "withdrawn"
+    app.decided_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"message": "Application withdrawn."}
+
+@router.get("/notifications/unread-count")
+def notifications_unread_count(db: Session = Depends(get_db), renter: User = Depends(renter_only)):
+    count = db.query(func.count(Notification.id)).filter(
+        Notification.user_id == renter.id, Notification.is_read == False,
+    ).scalar()
+    return {"count": count}
+
 
 @router.get("/profile", response_model=RenterProfileDetail)
 def get_profile(db: Session = Depends(get_db), renter: User = Depends(renter_only)):
@@ -548,41 +662,10 @@ def list_my_applications(
     ]
 
 
-@router.get("/applications/pending-count")
-def applications_pending_count(db: Session = Depends(get_db), renter: User = Depends(renter_only)):
-    count = db.query(func.count(RentalApplication.id)).filter(
-        RentalApplication.renter_id == renter.id,
-        RentalApplication.status.in_(("submitted", "viewed")),
-    ).scalar()
-    return {"count": count}
-
-
-@router.patch("/applications/{application_id}/withdraw")
-def withdraw_application(
-    application_id: str, db: Session = Depends(get_db), renter: User = Depends(renter_only),
-):
-    app = db.query(RentalApplication).filter(
-        RentalApplication.id == application_id, RentalApplication.renter_id == renter.id,
-    ).first()
-    if app is None:
-        raise HTTPException(status_code=404, detail="Application not found.")
-    if app.status not in ("submitted", "viewed"):
-        raise HTTPException(status_code=409, detail="Only pending applications can be withdrawn.")
-
-    app.status = "withdrawn"
-    app.decided_at = datetime.now(timezone.utc)
-    db.commit()
-    return {"message": "Application withdrawn."}
-
-@router.get("/notifications/unread-count")
-def notifications_unread_count(db: Session = Depends(get_db), renter: User = Depends(renter_only)):
-    count = db.query(func.count(Notification.id)).filter(
-        Notification.user_id == renter.id, Notification.is_read == False,
-    ).scalar()
-    return {"count": count}
 
 @router.get("/amenities", response_model=list[AmenityMini])
 def list_amenities(db: Session = Depends(get_db)):
     """Return all available amenities for the filter panel."""
     amenities = db.query(Amenity).order_by(Amenity.category, Amenity.name).all()
     return [AmenityMini(id=a.id, name=a.name, icon_key=a.icon_key) for a in amenities]
+

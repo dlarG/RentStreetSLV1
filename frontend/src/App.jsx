@@ -11,6 +11,7 @@ import RegisterPage from "./components/layouts/auth/RegisterPage";
 import TenantDashboard from "./components/pages/users/renter/TenantDashboard";
 import RenterOverview from "./components/pages/users/renter/RenterOverview";
 import RenterSearch from "./components/pages/users/renter/RenterSearch";
+import MyFavorites from "./components/pages/users/renter/MyFavorities";
 
 // Admin Components Import
 import AdminOverview from "./components/pages/admin/AdminOverview";
@@ -77,6 +78,7 @@ function App() {
         <Route path="/renter/settings/" element={<RenterSettings />} />
         <Route path="/renter/search" element={<RenterSearch />} />
         <Route path="applications" element={<RenterApplications />} />
+        <Route path="favorites" element={<MyFavorites />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
