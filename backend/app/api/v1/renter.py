@@ -580,3 +580,9 @@ def notifications_unread_count(db: Session = Depends(get_db), renter: User = Dep
         Notification.user_id == renter.id, Notification.is_read == False,
     ).scalar()
     return {"count": count}
+
+@router.get("/amenities", response_model=list[AmenityMini])
+def list_amenities(db: Session = Depends(get_db)):
+    """Return all available amenities for the filter panel."""
+    amenities = db.query(Amenity).order_by(Amenity.category, Amenity.name).all()
+    return [AmenityMini(id=a.id, name=a.name, icon_key=a.icon_key) for a in amenities]
