@@ -29,6 +29,20 @@ from app.schemas.renter import (
 router = APIRouter(prefix="/renter", tags=["renter"])
 renter_only = require_roles("renter")
 
+@router.get("/applications/counts")
+def application_status_counts(db: Session = Depends(get_db), renter: User = Depends(renter_only)):
+    rows = (
+        db.query(RentalApplication.status, func.count(RentalApplication.id))
+        .filter(RentalApplication.renter_id == renter.id)
+        .group_by(RentalApplication.status)
+        .all()
+    )
+    counts = {status: count for status, count in rows}
+    # Ensure every status key exists even at zero, so the frontend doesn't
+    # need its own fallback-to-0 logic scattered around.
+    for status_key in ("submitted", "viewed", "accepted", "rejected", "withdrawn"):
+        counts.setdefault(status_key, 0)
+    return counts
 
 def _profile_to_detail(user: User, profile: RenterProfile, db: Session) -> RenterProfileDetail:
     campus_name = None

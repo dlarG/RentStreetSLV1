@@ -521,12 +521,20 @@ function RenterTypeCard({ active, onClick, icon: Icon, label }) {
       onClick={onClick}
       className={`cursor-pointer flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3.5 transition-all text-center ${
         active
-          ? "border-[#0e5c56] bg-[#0e5c56]/5"
+          ? "border-[#c5ae95] bg-[#c5ae95]/5"
           : "border-ink/10 hover:border-ink/20"
       }`}
     >
-      <Icon size={20} className={active ? "text-bay" : "text-ink/40"} />
-      <span className="font-semibold text-xs">{label}</span>
+      <Icon size={20} className={active ? "text-papaya" : "text-ink/40"} />
+      <span
+        className={
+          active
+            ? "text-papaya font-semibold text-xs"
+            : "text-ink font-semibold text-xs"
+        }
+      >
+        {label}
+      </span>
     </button>
   );
 }
