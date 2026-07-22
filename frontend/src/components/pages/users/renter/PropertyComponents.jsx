@@ -465,12 +465,24 @@ export function PropertyDetailModal({
                             ₱{r.base_price_monthly.toLocaleString()}/mo
                           </span>
                         </div>
-                        <p className="text-xs text-ink/50">
+                        <p className="text-xs text-ink/50 mb-2">
                           {r.room_type === "private" ? "Private" : "Shared"} ·
                           Capacity {r.capacity}
                           {r.has_own_bathroom && " · Own CR"}
                           {r.has_aircon && " · Aircon"}
                         </p>
+                        {r.images && r.images.length > 0 && (
+                          <div className="flex gap-1.5 overflow-x-auto">
+                            {r.images.slice(0, 4).map((img) => (
+                              <img
+                                key={img.id}
+                                src={fileUrl(img.url)}
+                                alt=""
+                                className="w-35 h-35 rounded-lg object-cover flex-shrink-0 border border-ink/5"
+                              />
+                            ))}
+                          </div>
+                        )}
                       </button>
                     );
                   })}
