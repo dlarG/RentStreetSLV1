@@ -25,6 +25,7 @@ import LandLordDashboard from "./components/pages/users/landlord/LandLordDashboa
 import LandLordOverview from "./components/pages/users/landlord/LandLordOverview";
 import PropertyManagement from "./components/pages/users/landlord/PropertyManagement";
 import RenterSettings from "./components/pages/users/renter/RenterSettings";
+import RenterApplications from "./components/pages/users/renter/RenterApplications";
 // import MyTenants from "./components/pages/users/MyTenant";
 
 function App() {
@@ -75,6 +76,7 @@ function App() {
         <Route index element={<RenterOverview />} />
         <Route path="/renter/settings/" element={<RenterSettings />} />
         <Route path="/renter/search" element={<RenterSearch />} />
+        <Route path="applications" element={<RenterApplications />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

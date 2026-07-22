@@ -115,6 +115,19 @@ class PublicRoomItem(BaseModel):
     status: str
     images: list[dict]
 
+class ApplicationListItem(BaseModel):
+    id: str
+    boarding_house_id: str
+    boarding_house_name: str
+    cover_image_url: str | None
+    room_id: str
+    room_label: str
+    monthly_rate: float
+    status: str
+    message: str | None
+    applied_at: str
+    decided_at: str | None
+
 
 class PropertyPublicDetail(PropertySearchItem):
     description: str | None
@@ -125,6 +138,7 @@ class PropertyPublicDetail(PropertySearchItem):
     is_sub_metered: bool
     rooms: list[PublicRoomItem]
     all_amenities: list[AmenityMini]
+    room_application_status: dict[str, str] = {}
 
 
 class ApplyRequest(BaseModel):

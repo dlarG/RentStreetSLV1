@@ -15,11 +15,12 @@ from app.models.properties import BoardingHouse, Room, PropertyImage, Amenity, B
 from app.models.ml import Favorite
 from app.models.misc import Review
 from fastapi import UploadFile, File
+from app.models.misc import Notification
 from app.core.security import verify_password
 from app.core.files import save_upload, ALLOWED_IMAGE_TYPES
 from app.models.users import Campus
 from app.schemas.renter import (
-    ProfileCompleteness, ProfileChecklistItem, DashboardStats,
+    ApplicationListItem, ProfileCompleteness, ProfileChecklistItem, DashboardStats,
     NearbyProperty, ActivityItem, RenterProfileDetail, RenterProfileUpdateRequest, DeactivateAccountRequest,
     AmenityMini, PropertySearchItem, PropertySearchResponse,
     PublicRoomItem, PropertyPublicDetail, ApplyRequest,
@@ -323,6 +324,7 @@ def search_properties(
         .group_by(Review.boarding_house_id)
         .subquery()
     )
+    
 
     query = (
         db.query(
@@ -333,6 +335,7 @@ def search_properties(
         .outerjoin(review_agg, review_agg.c.bh_id == BoardingHouse.id)
         .filter(BoardingHouse.status == "active")
     )
+
 
     if search:
         like = f"%{search}%"
@@ -434,6 +437,13 @@ def get_property_public_detail(property_id: str, db: Session = Depends(get_db), 
         Favorite.renter_id == renter.id, Favorite.boarding_house_id == bh.id
     ).first() is not None
 
+    my_applications = db.query(RentalApplication).filter(
+        RentalApplication.renter_id == renter.id,
+        RentalApplication.boarding_house_id == bh.id,
+        RentalApplication.status.in_(("submitted", "viewed", "accepted")),
+    ).all()
+    room_application_status = {str(a.room_id): a.status for a in my_applications if a.room_id}
+
     return PropertyPublicDetail(
         id=str(bh.id), name=bh.name, cover_image_url=_cover_image(db, bh.id),
         barangay=bh.barangay, municipality=bh.municipality,
@@ -453,6 +463,7 @@ def get_property_public_detail(property_id: str, db: Session = Depends(get_db), 
             )
             for r in rooms
         ],
+        room_application_status=room_application_status,
         all_amenities=[AmenityMini(id=a.id, name=a.name, icon_key=a.icon_key) for a in amenities],
     )
 
@@ -491,11 +502,17 @@ def apply_to_room(payload: ApplyRequest, db: Session = Depends(get_db), renter: 
         raise HTTPException(status_code=409, detail="This room is no longer available.")
 
     existing = db.query(RentalApplication).filter(
-        RentalApplication.renter_id == renter.id, RentalApplication.room_id == payload.room_id,
-        RentalApplication.status.in_(("submitted", "viewed")),
+        RentalApplication.renter_id == renter.id,
+        RentalApplication.room_id == payload.room_id,
+        RentalApplication.status.in_(("submitted", "viewed", "accepted")),
     ).first()
     if existing:
-        raise HTTPException(status_code=409, detail="You already have a pending application for this room.")
+        detail = (
+            "You're already renting this room."
+            if existing.status == "accepted"
+            else "You already have a pending application for this room."
+        )
+        raise HTTPException(status_code=409, detail=detail)
 
     application = RentalApplication(
         renter_id=renter.id, boarding_house_id=bh.id, room_id=room.id, message=payload.message,
@@ -504,3 +521,62 @@ def apply_to_room(payload: ApplyRequest, db: Session = Depends(get_db), renter: 
     db.commit()
     db.refresh(application)
     return {"message": "Application submitted! The landlord will review it soon.", "id": str(application.id)}
+
+@router.get("/applications", response_model=list[ApplicationListItem])
+def list_my_applications(
+    status_filter: str = Query("all"),
+    db: Session = Depends(get_db), renter: User = Depends(renter_only),
+):
+    query = (
+        db.query(RentalApplication, BoardingHouse, Room)
+        .join(BoardingHouse, BoardingHouse.id == RentalApplication.boarding_house_id)
+        .join(Room, Room.id == RentalApplication.room_id)
+        .filter(RentalApplication.renter_id == renter.id)
+    )
+    if status_filter != "all":
+        query = query.filter(RentalApplication.status == status_filter)
+
+    rows = query.order_by(RentalApplication.applied_at.desc()).all()
+    return [
+        ApplicationListItem(
+            id=str(app.id), boarding_house_id=str(bh.id), boarding_house_name=bh.name,
+            cover_image_url=_cover_image(db, bh.id), room_id=str(room.id), room_label=room.room_label,
+            monthly_rate=float(room.base_price_monthly), status=app.status, message=app.message,
+            applied_at=str(app.applied_at), decided_at=str(app.decided_at) if app.decided_at else None,
+        )
+        for app, bh, room in rows
+    ]
+
+
+@router.get("/applications/pending-count")
+def applications_pending_count(db: Session = Depends(get_db), renter: User = Depends(renter_only)):
+    count = db.query(func.count(RentalApplication.id)).filter(
+        RentalApplication.renter_id == renter.id,
+        RentalApplication.status.in_(("submitted", "viewed")),
+    ).scalar()
+    return {"count": count}
+
+
+@router.patch("/applications/{application_id}/withdraw")
+def withdraw_application(
+    application_id: str, db: Session = Depends(get_db), renter: User = Depends(renter_only),
+):
+    app = db.query(RentalApplication).filter(
+        RentalApplication.id == application_id, RentalApplication.renter_id == renter.id,
+    ).first()
+    if app is None:
+        raise HTTPException(status_code=404, detail="Application not found.")
+    if app.status not in ("submitted", "viewed"):
+        raise HTTPException(status_code=409, detail="Only pending applications can be withdrawn.")
+
+    app.status = "withdrawn"
+    app.decided_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"message": "Application withdrawn."}
+
+@router.get("/notifications/unread-count")
+def notifications_unread_count(db: Session = Depends(get_db), renter: User = Depends(renter_only)):
+    count = db.query(func.count(Notification.id)).filter(
+        Notification.user_id == renter.id, Notification.is_read == False,
+    ).scalar()
+    return {"count": count}
